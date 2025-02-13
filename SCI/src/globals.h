@@ -211,13 +211,17 @@ extern std::string ConvOutputFile;
 extern std::vector<std::string> ConvHeaders; 
 extern WriteToCSV writeConvCSV;
 
-extern std::string ReluOutputFile;
-extern std::vector<std::string> ReluHeaders; 
-extern WriteToCSV writeReluCSV;
+// extern std::string ReluOutputFile;
+// extern std::vector<std::string> ReluHeaders; 
+// extern WriteToCSV writeReluCSV;
 
-extern std::string MaxPoolOutputFile;
-extern std::vector<std::string> MaxPoolHeaders; 
-extern WriteToCSV writeMaxPoolCSV;
+// extern std::string MaxPoolOutputFile;
+// extern std::vector<std::string> MaxPoolHeaders; 
+// extern WriteToCSV writeMaxPoolCSV;
+
+// extern std::string BatchNorm1OutputFile;
+// extern std::vector<std::string> BatchNorm1Headers; 
+// extern WriteToCSV writeBatchNorm1CSV;
 
 /**
  * Added by Tanjina - ends

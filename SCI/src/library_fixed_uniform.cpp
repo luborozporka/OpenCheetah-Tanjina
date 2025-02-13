@@ -309,12 +309,7 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
                    signedIntType zPadHRight, signedIntType zPadWLeft,
                    signedIntType zPadWRight, signedIntType strideH,
                    signedIntType strideW, intType *inputArr, intType *filterArr,
-                   intType *outArr) {
-/** Flag for the power readings
-  * true: start collecting the power usage
-  * false: stop collecting the power usage
-**/
-// static bool monitor_power = false; // Added by Tanjina                  
+                   intType *outArr) {                
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -334,44 +329,10 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
 #ifdef LOG_LAYERWISE
   // conv layer counter
   Conv_layer_count++;
-  //static int Conv_layer_count = 1;
-  static int layer_count = 1;
-  
-  // Variable to store the power usage value
-  int power_usage = 0;
-  // Initializing an array to store the power usage values
-  // std::vector<int> power_readings;
-    /** Flag for the power readings
-   * true: start collecting the power usage
-   * false: stop collecting the power usage
-   * */
-  // monitor_power = true;
-  //int result = system ();
 
   std::cout << "STARTING ENERGY MEASUREMENT" << std::endl;
   // Pass the the Power usage file path to the Energy measurement library 
   EnergyMeasurement measurement(power_usage_path);
-
-  // if (monitor_power){
-
-    // // open the file that resides in the power_usage_path, Unit: microWatt
-    // std::ifstream file(power_usage_path);
-
-    // if(file.is_open()){
-    // file >> power_usage;   // Read the power usage value from the file
-    // power_readings.push_back(power_usage); //append the power usage in the power_readings vector
-    // file.close();          // close it after reading
-  
-    // // Add the current power reading into the sum
-    // ConvTotalPowerConsumption += power_usage;
-  
-    // std::cout << "Tanjina-Current Power usage for HomConv #" << Conv_layer_count << " : " << power_usage << " microwatts" << std::endl;// Print the latest power usage   
-    // }else{
-    // // If it failed to open the file, dispaly and error message
-    // std::cerr << "Error: could not open file for power usage: " << power_usage_path << std::endl;
-    // }
-  //   measurement = new EnergyMeasurement(power_usage_path);
-  // }
 
 #endif
 
@@ -559,7 +520,8 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
 **/  
 #ifdef LOG_LAYERWISE
   std::vector<std::pair<uint64_t, int64_t>> power_readings = measurement.stop();
-  ConvExecutionTime = (ConvEndTime - ConvStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
+  // ConvExecutionTime = (ConvEndTime - ConvStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
+  ConvExecutionTime = (ConvEndTime - ConvStartTime); // Note-Tanjina: Keep in milliseconds, need to do the conversion later
  
   for(int i = 0; i < power_readings.size(); ++i){
     uint64_t avgPower = power_readings[i].first;
@@ -570,8 +532,6 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
     std::cout << "Tanjina-Power usage values from the power_reading for HomConv #" << Conv_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << ConvExecutionTime << " seconds" << std::endl;
     // std::cout <<  "Tanjina-NN architecture info: " << "Conv_N = " << N << " Conv_H = " << H << " Conv_W = " << W << " Conv_CI = " << CI << " Conv_FH = " << FH << " Conv_FW = " << FW << " Conv_CO = " << CO << " Conv_ zPadHLeft = " << zPadHLeft << " Conv_zPadHRight = " << zPadHRight << " Conv_zPadWLeft = " << zPadWLeft  << " Conv_zPadWRight = " << zPadWRight << " Conv_strideH = " << strideH << " Conv_strideW = " << strideW << std::endl;
     
-    //std::vector<csv_column_type> conv_data = {i, layerType, Conv_layer_count, timestampPower, avgPowerUsage, ConvExecutionTime, N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW};
-    //std::vector<csv_column_type> conv_data_row = {i, layerType, Conv_layer_count, timestampPower, avgPowerUsage, ConvExecutionTime, int64_t(N), int64_t(H), int64_t(W), int64_t(CI), int64_t(FH), int64_t(FW), int64_t(CO), int64_t(zPadHLeft), int64_t(zPadHRight), int64_t(zPadWLeft), int64_t(zPadWRight), int64_t(strideH), int64_t(strideW)};
     std::vector<csv_column_type> conv_data;
     conv_data.push_back(i);
     conv_data.push_back("Conv");
@@ -595,7 +555,7 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
 
     writeConvCSV.insertDataRow(conv_data);
   }
-  // monitor_power = false;
+  
 #endif
 
 }
@@ -800,11 +760,7 @@ void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
 #endif
 
 void ArgMax(int32_t s1, int32_t s2, intType *inArr, intType *outArr) {
-/** Flag for the power readings
-  * true: start collecting the power usage
-  * false: stop collecting the power usage
-**/
-// static bool monitor_power = false; // Added by Tanjina  
+
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -823,40 +779,10 @@ void ArgMax(int32_t s1, int32_t s2, intType *inArr, intType *outArr) {
 #ifdef LOG_LAYERWISE
   // ArgMax layer counter
   ArgMax_layer_count++;
-  //static int ArgMax_layer_count = 1;
-  
-  // Variable to store the power usage value
-  int power_usage = 0;
-  // Initializing an array to store the power usage values
-  // std::vector<int> power_readings;
-  /** Flag for the power readings
-   * true: start collecting the power usage
-   * false: stop collecting the power usage
-   **/
-  // monitor_power = true;
-  //int result = system ();
 
   std::cout << "STARTING ENERGY MEASUREMENT" << std::endl;
   // Pass the the Power usage file path to the Energy measurement library 
-  EnergyMeasurement measurement(power_usage_path);
-  // if (monitor_power){
-  //   // open the file that resides in the power_usage_path, Unit: microWatt
-  //   std::ifstream file(power_usage_path);
-
-  //   if(file.is_open()){
-  //     file >> power_usage;   // Read the power usage value from the file
-  //     power_readings.push_back(power_usage); //append the power usage in the power_readings vector
-  //     file.close();          // close it after reading
-    
-  //     // Add the current power reading into the sum
-  //     ArgMaxTotalPowerConsumption += power_usage;
-    
-  //     std::cout << "Tanjina-Current Power usage for ArgMax #" << ArgMax_layer_count << " : " << power_usage << " microwatts" << std::endl;// Print the latest power usage
-  //   }else{
-  //     // If it failed to open the file, dispaly and error message
-  //     std::cerr << "Error: could not open file for power usage: " << power_usage_path << std::endl;
-  //   }
-  // }            
+  EnergyMeasurement measurement(power_usage_path);         
 
 #endif
 
@@ -939,7 +865,8 @@ void ArgMax(int32_t s1, int32_t s2, intType *inArr, intType *outArr) {
 **/
 #ifdef LOG_LAYERWISE
   std::vector<std::pair<uint64_t, int64_t>> power_readings = measurement.stop();
-  ArgMaxExecutionTime = (ArgMaxEndTime - ArgMaxStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
+  // ArgMaxExecutionTime = (ArgMaxEndTime - ArgMaxStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
+  ArgMaxExecutionTime = (ArgMaxEndTime - ArgMaxStartTime); // Note-Tanjina: Keep in milliseconds, need to do the conversion later
   
   for(int i = 0; i < power_readings.size(); ++i){
     uint64_t avgPower = power_readings[i].first;
@@ -949,16 +876,12 @@ void ArgMax(int32_t s1, int32_t s2, intType *inArr, intType *outArr) {
     ArgMaxTotalPowerConsumption += avgPower;
     std::cout << "Tanjina-Power usage values from the power_reading for ArgMax #" << ArgMax_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << ArgMaxExecutionTime << " seconds" << std::endl; 
   }
-  // monitor_power = false;          
+        
 #endif
 }
 
 void Relu(int32_t size, intType *inArr, intType *outArr, int sf, bool doTruncation) {
-/** Flag for the power readings
-  * true: start collecting the power usage
-  * false: stop collecting the power usage
-**/
-// static bool monitor_power = false; // Added by Tanjina
+
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -978,41 +901,10 @@ void Relu(int32_t size, intType *inArr, intType *outArr, int sf, bool doTruncati
 #ifdef LOG_LAYERWISE
   // Relu layer counter
   Relu_layer_count++;
-  //static int Relu_layer_count = 1;
-  static int layer_count = 1;
-
-  // Variable to store the power usage value
-  int power_usage = 0;
-  // Initializing an array to store the power usage values
-  // std::vector<int> power_readings;
-    /** Flag for the power readings
-   * true: start collecting the power usage
-   * false: stop collecting the power usage
-   * */
-  // monitor_power = true;
-  //int result = system ();
 
   std::cout << "STARTING ENERGY MEASUREMENT" << std::endl;
   // Pass the the Power usage file path to the Energy measurement library 
-  EnergyMeasurement measurement(power_usage_path);
-  // if (monitor_power){
-  //   // open the file that resides in the power_usage_path, Unit: microWatt
-  //   std::ifstream file(power_usage_path);
-
-  //   if(file.is_open()){
-  //     file >> power_usage;   // Read the power usage value from the file
-  //     power_readings.push_back(power_usage); //append the power usage in the power_readings vector
-  //     file.close();          // close it after reading
-     
-  //     // Add the current power reading into the sum
-  //     ReluTotalPowerConsumption += power_usage;
-    
-  //     std::cout << "Tanjina-Current Power usage for Relu #" << Relu_layer_count << " : " << power_usage << " microwatts" << std::endl;// Print the latest power usage 
-  //   }else{
-  //     // If it failed to open the file, dispaly and error message
-  //     std::cerr << "Error: could not open file for power usage: " << power_usage_path << std::endl;
-  //   }
-  // }            
+  EnergyMeasurement measurement(power_usage_path);         
 
 #endif
 
@@ -1190,7 +1082,8 @@ void Relu(int32_t size, intType *inArr, intType *outArr, int sf, bool doTruncati
 **/
 #ifdef LOG_LAYERWISE
   std::vector<std::pair<uint64_t, int64_t>> power_readings = measurement.stop();
-  ReluExecutionTime = (ReluEndTime - ReluStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
+  // ReluExecutionTime = (ReluEndTime - ReluStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
+  ReluExecutionTime = (ReluEndTime - ReluStartTime); // Note-Tanjina: Keep in milliseconds, need to do the conversion later
 
   for(int i = 0; i < power_readings.size(); ++i){
     uint64_t avgPower = power_readings[i].first;
@@ -1200,18 +1093,17 @@ void Relu(int32_t size, intType *inArr, intType *outArr, int sf, bool doTruncati
     ReluTotalPowerConsumption += avgPower;
     std::cout << "Tanjina-Power usage values from the power_reading for Relu #" << Relu_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << ReluExecutionTime << " seconds" << " relu_coeff = " << size << std::endl; 
 
-    std::vector<csv_column_type> relu_data;
-    relu_data.push_back(i);
-    relu_data.push_back("Relu");
-    relu_data.push_back(Relu_layer_count);
-    relu_data.push_back(timestampPower);
-    relu_data.push_back(avgPowerUsage);
-    relu_data.push_back(ReluExecutionTime);
-    relu_data.push_back(size);
+    // std::vector<csv_column_type> relu_data;
+    // relu_data.push_back(i);
+    // relu_data.push_back("Relu");
+    // relu_data.push_back(Relu_layer_count);
+    // relu_data.push_back(timestampPower);
+    // relu_data.push_back(avgPowerUsage);
+    // relu_data.push_back(ReluExecutionTime);
+    // relu_data.push_back(size);
 
-    writeReluCSV.insertDataRow(relu_data);
-  }
-  // monitor_power = false;          
+    // writeReluCSV.insertDataRow(relu_data);
+  }       
 #endif
 
   delete[] tempInp;
@@ -1224,11 +1116,6 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
              int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
              int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
              int32_t C1, intType *inArr, intType *outArr) {
-/** Flag for the power readings
-  * true: start collecting the power usage
-  * false: stop collecting the power usage
-**/
-// static bool monitor_power = false; // Added by Tanjina
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -1247,40 +1134,10 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
 #ifdef LOG_LAYERWISE
   // MaxPool layer counter
   MaxPool_layer_count++;
-  //static int MaxPool_layer_count = 1;
-  
-  // Variable to store the power usage value
-  int power_usage = 0;
-  // Initializing an array to store the power usage values
-  // std::vector<int> power_readings;
-    /** Flag for the power readings
-   * true: start collecting the power usage
-   * false: stop collecting the power usage
-   * */
-  // monitor_power = true;
-  //int result = system ();
 
   std::cout << "STARTING ENERGY MEASUREMENT" << std::endl;
   // Pass the the Power usage file path to the Energy measurement library 
-  EnergyMeasurement measurement(power_usage_path);
-  // if (monitor_power){
-  //   // open the file that resides in the power_usage_path, Unit: microWatt
-  //   std::ifstream file(power_usage_path);
-
-  //   if(file.is_open()){
-  //     file >> power_usage;   // Read the power usage value from the file
-  //     power_readings.push_back(power_usage); //append the power usage in the power_readings vector
-  //     file.close();          // close it after reading
-    
-  //     // Add the current power reading into the sum
-  //     MaxPoolTotalPowerConsumption += power_usage;
-    
-  //     std::cout << "Tanjina-Current Power usage for MaxPool #" << MaxPool_layer_count << " : " << power_usage << " microwatts" << std::endl;// Print the latest power usage
-  //   }else{
-  //     // If it failed to open the file, dispaly and error message
-  //     std::cerr << "Error: could not open file for power usage: " << power_usage_path << std::endl;
-  //   }
-  // }            
+  EnergyMeasurement measurement(power_usage_path);       
 
 #endif
 
@@ -1479,7 +1336,8 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
 **/
 #ifdef LOG_LAYERWISE
   std::vector<std::pair<uint64_t, int64_t>> power_readings = measurement.stop();
-  MaxPoolExecutionTime = (MaxPoolEndTime - MaxPoolStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
+  // MaxPoolExecutionTime = (MaxPoolEndTime - MaxPoolStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
+  MaxPoolExecutionTime = (MaxPoolEndTime - MaxPoolStartTime); // Note-Tanjina: Keep in milliseconds, need to do the conversion later
   
   for(int i = 0; i < power_readings.size(); ++i){
     uint64_t avgPower = power_readings[i].first;
@@ -1490,33 +1348,32 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
     std::cout << "Tanjina-Power usage values from the power_reading for MaxPool #" << MaxPool_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << MaxPoolExecutionTime << " seconds" << std::endl; 
     // std::cout << "Tanjina-NN architecture info: " << "MaxPool_N = " << N << " MaxPool_H = " << H << " MaxPool_W = " << W << " MaxPool_C = " << C << " MaxPool_ksizeH = " << ksizeH << " MaxPool_ksizeW = " << ksizeW << " MaxPool_zPadHLeft = " << zPadHLeft << " MaxPool_zPadHRight = " << zPadHRight << " MaxPool_zPadWLeft = " << zPadWLeft  << " MaxPool_zPadWRight = " << zPadWRight << " MaxPool_strideH = " << strideH << " MaxPool_strideW = " << strideW << " MaxPool_N1 = " << N1 << " MaxPool_imgH = " << imgH << " MaxPool_imgW = " << imgW << " MaxPool_C1 = " << C1 << std::endl;
 
-    std::vector<csv_column_type> maxpool_data;
-    maxpool_data.push_back(i);
-    maxpool_data.push_back("MaxPool");
-    maxpool_data.push_back(MaxPool_layer_count);
-    maxpool_data.push_back(timestampPower);
-    maxpool_data.push_back(avgPowerUsage);
-    maxpool_data.push_back(MaxPoolExecutionTime);
-    maxpool_data.push_back(N);
-    maxpool_data.push_back(H);
-    maxpool_data.push_back(W);
-    maxpool_data.push_back(C);
-    maxpool_data.push_back(ksizeH);
-    maxpool_data.push_back(ksizeW);
-    maxpool_data.push_back(zPadHLeft);
-    maxpool_data.push_back(zPadHRight);
-    maxpool_data.push_back(zPadWLeft);
-    maxpool_data.push_back(zPadWRight);
-    maxpool_data.push_back(strideH);
-    maxpool_data.push_back(strideW);
-    maxpool_data.push_back(N1);
-    maxpool_data.push_back(imgH);
-    maxpool_data.push_back(imgW);
-    maxpool_data.push_back(C1);
+    // std::vector<csv_column_type> maxpool_data;
+    // maxpool_data.push_back(i);
+    // maxpool_data.push_back("MaxPool");
+    // maxpool_data.push_back(MaxPool_layer_count);
+    // maxpool_data.push_back(timestampPower);
+    // maxpool_data.push_back(avgPowerUsage);
+    // maxpool_data.push_back(MaxPoolExecutionTime);
+    // maxpool_data.push_back(N);
+    // maxpool_data.push_back(H);
+    // maxpool_data.push_back(W);
+    // maxpool_data.push_back(C);
+    // maxpool_data.push_back(ksizeH);
+    // maxpool_data.push_back(ksizeW);
+    // maxpool_data.push_back(zPadHLeft);
+    // maxpool_data.push_back(zPadHRight);
+    // maxpool_data.push_back(zPadWLeft);
+    // maxpool_data.push_back(zPadWRight);
+    // maxpool_data.push_back(strideH);
+    // maxpool_data.push_back(strideW);
+    // maxpool_data.push_back(N1);
+    // maxpool_data.push_back(imgH);
+    // maxpool_data.push_back(imgW);
+    // maxpool_data.push_back(C1);
 
-    writeMaxPoolCSV.insertDataRow(maxpool_data);
-  }
-  // monitor_power = false;          
+    // writeMaxPoolCSV.insertDataRow(maxpool_data);
+  }        
 #endif
 
 }
@@ -1526,11 +1383,6 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
              int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
              int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
              int32_t C1, intType *inArr, intType *outArr) {
-/** Flag for the power readings
-  * true: start collecting the power usage
-  * false: stop collecting the power usage
-**/
-// static bool monitor_power = false; // Added by Tanjina
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -1549,40 +1401,10 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
 #ifdef LOG_LAYERWISE
   // AvgPool layer counter
   AvgPool_layer_count++;
-  //static int AvgPool_layer_count = 1;
-  
-  // Variable to store the power usage value
-  int power_usage = 0;
-  // Initializing an array to store the power usage values
-  // std::vector<int> power_readings;
-    /** Flag for the power readings
-   * true: start collecting the power usage
-   * false: stop collecting the power usage
-   * */
-  // monitor_power = true;
-  //int result = system ();
 
   std::cout << "STARTING ENERGY MEASUREMENT" << std::endl;
   // Pass the the Power usage file path to the Energy measurement library 
-  EnergyMeasurement measurement(power_usage_path);
-  // if (monitor_power){
-  //   // open the file that resides in the power_usage_path, Unit: microWatt
-  //   std::ifstream file(power_usage_path);
-
-  //   if(file.is_open()){
-  //     file >> power_usage;   // Read the power usage value from the file
-  //     power_readings.push_back(power_usage); //append the power usage in the power_readings vector
-  //     file.close();          // close it after reading
-    
-  //     // Add the current power reading into the sum
-  //     AvgPoolTotalPowerConsumption += power_usage;
-    
-  //     std::cout << "Tanjina-Current Power usage for AvgPool #" << AvgPool_layer_count << " : " << power_usage << " microwatts" << std::endl;// Print the latest power usage 
-  //   }else{
-  //     // If it failed to open the file, dispaly and error message
-  //     std::cerr << "Error: could not open file for power usage: " << power_usage_path << std::endl;
-  //   }
-  // }            
+  EnergyMeasurement measurement(power_usage_path);          
 
 #endif
 
@@ -1773,7 +1595,8 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
 **/
 #ifdef LOG_LAYERWISE
   std::vector<std::pair<uint64_t, int64_t>> power_readings = measurement.stop();
-  AvgPoolExecutionTime = (AvgPoolEndTime - AvgPoolStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
+  // AvgPoolExecutionTime = (AvgPoolEndTime - AvgPoolStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
+  AvgPoolExecutionTime = (AvgPoolEndTime - AvgPoolStartTime); // Note-Tanjina: Keep in milliseconds, need to do the conversion later
   
   for(int i = 0; i < power_readings.size(); ++i){
     uint64_t avgPower = power_readings[i].first;
@@ -1782,8 +1605,7 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
 
     AvgPoolTotalPowerConsumption += avgPower;
     std::cout << "Tanjina-Power usage values from the power_reading for AvgPool #" << AvgPool_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << AvgPoolExecutionTime << " seconds" << std::endl;
-  }
-  // monitor_power = false;          
+  }       
 #endif
 
 }
@@ -2212,22 +2034,7 @@ void EndComputation() {
   std::cout << "Total number of ArgMax layer = " << ArgMax_layer_count
             << " layers" << std::endl;
   std::cout << "------------------------------------------------------\n";
-    // Added by Tanjina - for power readings (average)
-  std::cout << "Average power consumption in Conv layer = " << computeAveragePower(ConvTotalPowerConsumption, Conv_layer_count, "Conv")
-              << " watts." << std::endl;  
-  std::cout << "Average power consumption in Relu layer = " << computeAveragePower(ReluTotalPowerConsumption, Relu_layer_count, "Relu")
-              << " watts." << std::endl;           
-  std::cout << "Average power consumption in MaxPool layer = " << computeAveragePower(MaxPoolTotalPowerConsumption, MaxPool_layer_count, "MaxPool")
-              << " watts." << std::endl; 
-  std::cout << "Average power consumption in BatchNorm layer = " << computeAveragePower(BatchNormTotalPowerConsumption, BatchNorm_layer_count, "BatchNorm")
-              << " watts." << std::endl; 
-  std::cout << "Average power consumption in MatMul layer = " << computeAveragePower(MatMulTotalPowerConsumption, MatMul_layer_count, "MatMul")
-              << " watts." << std::endl; 
-  std::cout << "Average power consumption in AvgPool layer = " << computeAveragePower(AvgPoolTotalPowerConsumption, AvgPool_layer_count, "AvgPool")
-              << " watts." << std::endl; 
-  std::cout << "Average power consumption in ArgMax layer = " << computeAveragePower(ArgMaxTotalPowerConsumption, ArgMax_layer_count, "ArgMax")
-              << " watts." << std::endl; 
-  std::cout << "------------------------------------------------------\n";
+
   if (party == SERVER) {
     uint64_t ConvCommSentClient = 0;
     uint64_t MatMulCommSentClient = 0;

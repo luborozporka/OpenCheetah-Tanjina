@@ -66,11 +66,6 @@ extern void ElemWiseActModelVectorMult_pt(uint64_t s1, uint64_1D &arr1,
 
 void MatMul2D(int32_t d0, int32_t d1, int32_t d2, const intType *mat_A,
               const intType *mat_B, intType *mat_C, bool is_A_weight_matrix) {
-/** Flag for the power readings
-  * true: start collecting the power usage
-  * false: stop collecting the power usage
-**/
-// static bool monitor_power = false; // Added by Tanjina
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -89,40 +84,10 @@ void MatMul2D(int32_t d0, int32_t d1, int32_t d2, const intType *mat_A,
 #ifdef LOG_LAYERWISE
   // matmul layer counter
   MatMul_layer_count++;
-  //static int MatMul_layer_count = 1;
-  
-  // Variable to store the power usage value
-  int power_usage = 0;
-  // Initializing an array to store the power usage values
-  // std::vector<int> power_readings;
-    /** Flag for the power readings
-   * true: start collecting the power usage
-   * false: stop collecting the power usage
-   * */
-  // monitor_power = true;
-  //int result = system ();
 
   std::cout << "STARTING ENERGY MEASUREMENT" << std::endl;
   // Pass the the Power usage file path to the Energy measurement library 
   EnergyMeasurement measurement(power_usage_path);
-  // if (monitor_power){
-  //   // open the file that resides in the power_usage_path, Unit: microWatt
-  //   std::ifstream file(power_usage_path);
-
-  //   if(file.is_open()){
-  //   file >> power_usage;   // Read the power usage value from the file
-  //   power_readings.push_back(power_usage); //append the power usage in the power_readings vector
-  //   file.close();          // close it after reading
-  
-  //   // Add the current power reading into the sum
-  //   MatMulTotalPowerConsumption += power_usage;
- 
-  //   std::cout << "Tanjina-Current Power usage for MatMul #" << MatMul_layer_count << " : " << power_usage << " microwatts" << std::endl;// Print the latest power usage
-  //   }else{
-  //   // If it failed to open the file, dispaly and error message
-  //   std::cerr << "Error: could not open file for power usage: " << power_usage_path << std::endl;
-  //   }
-  // }
 
 #endif
 
@@ -210,7 +175,8 @@ void MatMul2D(int32_t d0, int32_t d1, int32_t d2, const intType *mat_A,
 **/
 #ifdef LOG_LAYERWISE
   std::vector<std::pair<uint64_t, int64_t>> power_readings = measurement.stop();
-  MatMulExecutionTime = (MatMulEndTime - MatMulStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
+  // MatMulExecutionTime = (MatMulEndTime - MatMulStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
+  MatMulExecutionTime = (MatMulEndTime - MatMulStartTime); // Note-Tanjina: Keep in milliseconds, need to do the conversion later
   
   for(int i = 0; i < power_readings.size(); ++i){
     uint64_t avgPower = power_readings[i].first;
@@ -220,7 +186,7 @@ void MatMul2D(int32_t d0, int32_t d1, int32_t d2, const intType *mat_A,
     MatMulTotalPowerConsumption += avgPower;
     std::cout << "Tanjina-Power usage values from the power_reading for MatMul #" << MatMul_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << MatMulExecutionTime << " seconds" << std::endl;
   }
-  // monitor_power = false;
+
 #endif
 
 #ifdef VERIFY_LAYERWISE
@@ -303,13 +269,6 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
                    signedIntType zPadWRight, signedIntType strideH,
                    signedIntType strideW, intType *inputArr, intType *filterArr,
                    intType *outArr) {
-
-
-/** Flag for the power readings
-  * true: start collecting the power usage
-  * false: stop collecting the power usage
-**/
-// static bool monitor_power = false; // Added by Tanjina
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -329,40 +288,10 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
 #ifdef LOG_LAYERWISE
   // conv layer counter
   Conv_layer_count++;
-  //static int Conv_layer_count = 1;
-  
-  // Variable to store the power usage value
-  int power_usage = 0;
-  // Initializing an array to store the power usage values
-  // std::vector<int> power_readings;
-    /** Flag for the power readings
-   * true: start collecting the power usage
-   * false: stop collecting the power usage
-   * */
-  // monitor_power = true;
-  //int result = system ();
 
   std::cout << "STARTING ENERGY MEASUREMENT" << std::endl;
   // Pass the the Power usage file path to the Energy measurement library 
   EnergyMeasurement measurement(power_usage_path);
-  // if (monitor_power){
-  //   // open the file that resides in the power_usage_path, Unit: microWatt
-  //   std::ifstream file(power_usage_path);
-
-  //   if(file.is_open()){
-  //   file >> power_usage;   // Read the power usage value from the file
-  //   power_readings.push_back(power_usage); //append the power usage in the power_readings vector
-  //   file.close();          // close it after reading
-  
-  //   // Add the current power reading into the sum
-  //   ConvTotalPowerConsumption += power_usage;
-  
-  //   std::cout << "Tanjina-Current Power usage for HomConv #" << Conv_layer_count << " : " << power_usage << " microwatts" << std::endl;// Print the latest power usage
-  //   }else{
-  //   // If it failed to open the file, dispaly and error message
-  //   std::cerr << "Error: could not open file for power usage: " << power_usage_path << std::endl;
-  //   }
-  // }
 
 #endif
 
@@ -585,8 +514,9 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
 **/
 #ifdef LOG_LAYERWISE
   std::vector<std::pair<uint64_t, int64_t>> power_readings = measurement.stop();
-  ConvExecutionTime = (ConvEndTime - ConvStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
-  
+  // ConvExecutionTime = (ConvEndTime - ConvStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
+  ConvExecutionTime = (ConvEndTime - ConvStartTime); // Note-Tanjina: Keep in milliseconds, need to do the conversion later
+
   for(int i = 0; i < power_readings.size(); ++i){
     uint64_t avgPower = power_readings[i].first;
     int64_t timestampPower = power_readings[i].second;
@@ -596,8 +526,6 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
     std::cout << "Tanjina-Power usage values from the power_reading for HomConv #" << Conv_layer_count << " : " << power_readings[i].first << " microwatts " << "Timestamp of the current power reading: " << power_readings[i].second << " Execution time: " << ConvExecutionTime << " seconds" << std::endl;
     // std::cout <<  "Tanjina-NN architecture info: " << "Conv_N = " << N << " Conv_H = " << H << " Conv_W = " << W << " Conv_CI = " << CI << " Conv_FH = " << FH << " Conv_FW = " << FW << " Conv_CO = " << CO << " Conv_ zPadHLeft = " << zPadHLeft << " Conv_zPadHRight = " << zPadHRight << " Conv_zPadWLeft = " << zPadWLeft  << " Conv_zPadWRight = " << zPadWRight << " Conv_strideH = " << strideH << " Conv_strideW = " << strideW << std::endl;
   
-    //std::vector<csv_column_type> conv_data = {i, layerType, Conv_layer_count, timestampPower, avgPowerUsage, ConvExecutionTime, N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH, strideW};
-    //std::vector<csv_column_type> conv_data_row = {i, layerType, Conv_layer_count, timestampPower, avgPowerUsage, ConvExecutionTime, int64_t(N), int64_t(H), int64_t(W), int64_t(CI), int64_t(FH), int64_t(FW), int64_t(CO), int64_t(zPadHLeft), int64_t(zPadHRight), int64_t(zPadWLeft), int64_t(zPadWRight), int64_t(strideH), int64_t(strideW)};
     std::vector<csv_column_type> conv_data;
     conv_data.push_back(i);
     conv_data.push_back("Conv");
@@ -621,7 +549,6 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
 
     writeConvCSV.insertDataRow(conv_data);
   }
-  // monitor_power = false;
 #endif
 
 }
@@ -629,11 +556,6 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
 void BatchNorm(int32_t B, int32_t H, int32_t W, int32_t C,
                const intType *inputArr, const intType *scales,
                const intType *bias, intType *outArr) {
-/** Flag for the power readings
-  * true: start collecting the power usage
-  * false: stop collecting the power usage
-**/
-// static bool monitor_power = false; // Added by Tanjina
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -652,40 +574,11 @@ void BatchNorm(int32_t B, int32_t H, int32_t W, int32_t C,
 #ifdef LOG_LAYERWISE
   // BN layer counter
   BatchNorm_layer_count++;
-  //static int BatchNorm_layer_count = 1;
-  
-  // Variable to store the power usage value
-  int power_usage = 0;
-  // Initializing an array to store the power usage values
-  // std::vector<int> power_readings;
-    /** Flag for the power readings
-   * true: start collecting the power usage
-   * false: stop collecting the power usage
-   * */
-  // monitor_power = true;
-  //int result = system ();
 
   std::cout << "STARTING ENERGY MEASUREMENT" << std::endl;
   // Pass the the Power usage file path to the Energy measurement library 
   EnergyMeasurement measurement(power_usage_path);
-  // if (monitor_power){
-  //   // open the file that resides in the power_usage_path, Unit: microWatt
-  //   std::ifstream file(power_usage_path);
-
-  //   if(file.is_open()){
-  //     file >> power_usage;   // Read the power usage value from the file
-  //     power_readings.push_back(power_usage); //append the power usage in the power_readings vector
-  //     file.close();          // close it after reading
-    
-  //     // Add the current power reading into the sum
-  //     BatchNormTotalPowerConsumption += power_usage;
-    
-  //     std::cout << "Tanjina-Current Power usage for BN1 #" << BatchNorm_layer_count << " : " << power_usage << " microwatts" << std::endl;// Print the latest power usage 
-  //   }else{
-  //     // If it failed to open the file, dispaly and error message
-  //     std::cerr << "Error: could not open file for power usage: " << power_usage_path << std::endl;
-  //   }
-  // }            
+           
 #endif
 
   static int batchNormCtr = 1;
@@ -754,8 +647,9 @@ void BatchNorm(int32_t B, int32_t H, int32_t W, int32_t C,
 **/
 #ifdef LOG_LAYERWISE
   std::vector<std::pair<uint64_t, int64_t>> power_readings = measurement.stop();
-  BatchNormExecutionTime = (BatchNormEndTime - BatchNormStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
-  
+  // BatchNormExecutionTime = (BatchNormEndTime - BatchNormStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
+  BatchNormExecutionTime = (BatchNormEndTime - BatchNormStartTime); // Note-Tanjina: Keep in milliseconds, need to do the conversion later  
+
   for(int i = 0; i < power_readings.size(); ++i){
     uint64_t avgPower = power_readings[i].first;
     int64_t timestampPower = power_readings[i].second;
@@ -763,18 +657,29 @@ void BatchNorm(int32_t B, int32_t H, int32_t W, int32_t C,
 
     BatchNormTotalPowerConsumption += avgPower;
     std::cout << "Tanjina-Power usage values from the power_reading for BN1 #" << BatchNorm_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << BatchNormExecutionTime << " seconds" << std::endl;
-  }
-  // monitor_power = false;          
+
+    // std::cout << "Tanjina-NN architecture info: " << "BN1_B = " << B << " BN1_C = " << C << " BN1_H = " << H << " BN1_W = " << W << std::endl;
+
+    // std::vector<csv_column_type> batchnorm1_data;
+    // batchnorm1_data.push_back(i);
+    // batchnorm1_data.push_back("BatchNorm 1");
+    // batchnorm1_data.push_back(BatchNorm_layer_count);
+    // batchnorm1_data.push_back(timestampPower);
+    // batchnorm1_data.push_back(avgPowerUsage);
+    // batchnorm1_data.push_back(BatchNormExecutionTime);
+    // batchnorm1_data.push_back(C);
+    // batchnorm1_data.push_back(H);
+    // batchnorm1_data.push_back(W);
+
+    // writeBatchNorm1CSV.insertDataRow(batchnorm1_data);
+  
+  }       
 #endif
+
 }
 
 void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
                                 intType *multArrVec, intType *outputArr) {
-/** Flag for the power readings
-  * true: start collecting the power usage
-  * false: stop collecting the power usage
-**/
-// static bool monitor_power = false; // Added by Tanjina
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -793,40 +698,11 @@ void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
 #ifdef LOG_LAYERWISE 
   // BN layer counter
   BatchNorm_layer_count++;
-  //static int BatchNorm_layer_count = 1;
-  
-  // Variable to store the power usage value
-  int power_usage = 0;
-  // Initializing an array to store the power usage values
-  // std::vector<int> power_readings;
-    /** Flag for the power readings
-   * true: start collecting the power usage
-   * false: stop collecting the power usage
-   * */
-  // monitor_power = true;
-  //int result = system ();
 
   std::cout << "STARTING ENERGY MEASUREMENT" << std::endl;
   // Pass the the Power usage file path to the Energy measurement library 
   EnergyMeasurement measurement(power_usage_path);
-  // if (monitor_power){
-  //   // open the file that resides in the power_usage_path, Unit: microWatt
-  //   std::ifstream file(power_usage_path);
-
-  //   if(file.is_open()){
-  //     file >> power_usage;   // Read the power usage value from the file
-  //     power_readings.push_back(power_usage); //append the power usage in the power_readings vector
-  //     file.close();          // close it after reading
-    
-  //     // Add the current power reading into the sum
-  //     BatchNormTotalPowerConsumption += power_usage;
-    
-  //     std::cout << "Tanjina-Current Power usage for BN2 #" << BatchNorm_layer_count << " : " << power_usage << " microwatts" << std::endl;// Print the latest power usage
-  //   }else{
-  //     // If it failed to open the file, dispaly and error message
-  //     std::cerr << "Error: could not open file for power usage: " << power_usage_path << std::endl;
-  //   }
-  // }            
+         
 #endif
 
   static int batchNormCtr = 1;
@@ -932,12 +808,13 @@ void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
   BatchNormEndTime = cur_end; // Added by Tanjina to calculate the duration/execution time
 #endif
 /** 
-  * Code block for power measurement in Batch Norm layer ends
+  * Code block for power measurement in Batch Norm 2 layer ends
   * Added by - Tanjina
 **/
 #ifdef LOG_LAYERWISE
   std::vector<std::pair<uint64_t, int64_t>> power_readings = measurement.stop();
-  BatchNormExecutionTime = (BatchNormEndTime - BatchNormStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
+  // BatchNormExecutionTime = (BatchNormEndTime - BatchNormStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
+  BatchNormExecutionTime = (BatchNormEndTime - BatchNormStartTime); // Note-Tanjina: Keep in milliseconds, need to do the conversion later
   
   for(int i = 0; i < power_readings.size(); ++i){
     uint64_t avgPower = power_readings[i].first;
@@ -947,7 +824,6 @@ void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
     BatchNormTotalPowerConsumption += avgPower;
     std::cout << "Tanjina-Power usage values from the power_reading for BN2 #" << BatchNorm_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << BatchNormExecutionTime << " seconds"  << std::endl;
   }
-  // monitor_power = false;   
 #endif  
 
 }

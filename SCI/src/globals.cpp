@@ -180,20 +180,27 @@ double ArgMaxExecutionTime = 0.0;
 
 //std::string layerType = "Conv";
 std::string ConvOutputFile = "/home/tanjina/OpenCheetah-Tanjina/Output/conv_output.csv";
-std::vector<std::string> ConvHeaders = {"index", "layer_name", "layer_number", "timestamp_power_reading", "avg_power_usage", "execution time", "Conv_N", "Conv_H", "Conv_W", "Conv_CI", "Conv_FH", "Conv_FW", "Conv_CO", "Conv_ zPadHLeft", "Conv_zPadHRight", "conv_zPadWLeft", "conv_zPadWRight", "conv_strideH", "conv_strideW"};
+std::vector<std::string> ConvHeaders = {"index", "layer_name", "layer_number", "timestamp_power_reading", "avg_power_usage", "execution time", "conv_N", "conv_H", "conv_W", "conv_CI", "conv_FH", "conv_FW", "conv_CO", "conv_ zPadHLeft", "conv_zPadHRight", "conv_zPadWLeft", "conv_zPadWRight", "conv_strideH", "conv_strideW"};
 WriteToCSV writeConvCSV(ConvOutputFile, ConvHeaders);
 
 //std::string layerType = "Relu";
-std::string ReluOutputFile = "/home/tanjina/OpenCheetah-Tanjina/Output/relu_output.csv";
-std::vector<std::string> ReluHeaders = {"index", "layer_name", "layer_number", "timestamp_power_reading", "avg_power_usage", "execution time", "relu_coeff"};
-WriteToCSV writeReluCSV(ReluOutputFile, ReluHeaders);
+// std::string ReluOutputFile = "/home/tanjina/OpenCheetah-Tanjina/Output/relu_output.csv";
+// std::vector<std::string> ReluHeaders = {"index", "layer_name", "layer_number", "timestamp_power_reading", "avg_power_usage", "execution time", "relu_coeff"};
+// WriteToCSV writeReluCSV(ReluOutputFile, ReluHeaders);
 
-std::string MaxPoolOutputFile = "/home/tanjina/OpenCheetah-Tanjina/Output/maxpool_output.csv";
-std::vector<std::string> MaxPoolHeaders = {"index", "layer_name", "layer_number", "timestamp_power_reading", "avg_power_usage", "execution time", "maxpool_N", "maxpool_H", "maxpool_W", "maxpool_C", "maxpool_ksizeH", "maxpool_ksizeW", "maxpool_zPadHLeft", "maxpool_zPadHRight", "maxpool_zPadWLeft", "maxpool_zPadWRight", "maxpool_strideH", "maxpool_strideW", "maxpool_N1", "maxpool_imgH", "maxpool_imgW", "maxpool_C1"};
-WriteToCSV writeMaxPoolCSV(MaxPoolOutputFile, MaxPoolHeaders);
+//std::string layerType = "MaxPool";
+// std::string MaxPoolOutputFile = "/home/tanjina/OpenCheetah-Tanjina/Output/maxpool_output.csv";
+// std::vector<std::string> MaxPoolHeaders = {"index", "layer_name", "layer_number", "timestamp_power_reading", "avg_power_usage", "execution time", "maxpool_N", "maxpool_H", "maxpool_W", "maxpool_C", "maxpool_ksizeH", "maxpool_ksizeW", "maxpool_zPadHLeft", "maxpool_zPadHRight", "maxpool_zPadWLeft", "maxpool_zPadWRight", "maxpool_strideH", "maxpool_strideW", "maxpool_N1", "maxpool_imgH", "maxpool_imgW", "maxpool_C1"};
+// WriteToCSV writeMaxPoolCSV(MaxPoolOutputFile, MaxPoolHeaders);
+
+//std::string layerType = "BatchNorm 1";
+// std::string BatchNorm1OutputFile = "/home/tanjina/OpenCheetah-Tanjina/Output/batchnorm1_output.csv";
+// std::vector<std::string> BatchNorm1Headers = {"index", "layer_name", "layer_number", "timestamp_power_reading", "avg_power_usage", "execution time", "BN1_C", "BN1_H", "BN1_W"};
+// WriteToCSV writeBatchNorm1CSV(BatchNorm1OutputFile, BatchNorm1Headers);
 
 /**
  * Added by Tanjina - ends
+ * 
  */
 
 #endif
