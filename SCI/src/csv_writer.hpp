@@ -18,7 +18,7 @@
 #include <vector>
 #include <variant> // For multiple data types
 // Define a varaint to handle different data type for output CSV column
-using csv_column_type = std::variant<int, int64_t, double, std::string>; 
+using csv_column_type = std::variant<int, int64_t, uint64_t, std::string>; 
 
 class WriteToCSV{
 private:

@@ -152,7 +152,7 @@ double computeAveragePower(uint64_t totalPower, int layerCount, const std::strin
 /* for execution time/duration */
 uint64_t ConvStartTime = 0;
 uint64_t ConvEndTime = 0;
-double ConvExecutionTime = 0.0;
+uint64_t ConvExecutionTime = 0;
 
 uint64_t ReluStartTime = 0;
 uint64_t ReluEndTime = 0;
@@ -180,7 +180,7 @@ double ArgMaxExecutionTime = 0.0;
 
 //std::string layerType = "Conv";
 std::string ConvOutputFile = "/home/tanjina/OpenCheetah-Tanjina/Output/conv_output.csv";
-std::vector<std::string> ConvHeaders = {"index", "layer_name", "layer_number", "timestamp_power_reading", "avg_power_usage", "execution time", "conv_N", "conv_H", "conv_W", "conv_CI", "conv_FH", "conv_FW", "conv_CO", "conv_ zPadHLeft", "conv_zPadHRight", "conv_zPadWLeft", "conv_zPadWRight", "conv_strideH", "conv_strideW"};
+std::vector<std::string> ConvHeaders = {"index", "layer_name", "layer_number", "timestamp_power_reading", "avg_power_usage_mcW", "conv_start_timestamp", "conv_end_timestamp", "execution_time_ms", "conv_N", "conv_H", "conv_W", "conv_CI", "conv_FH", "conv_FW", "conv_CO", "conv_ zPadHLeft", "conv_zPadHRight", "conv_zPadWLeft", "conv_zPadWRight", "conv_strideH", "conv_strideW"};
 WriteToCSV writeConvCSV(ConvOutputFile, ConvHeaders);
 
 //std::string layerType = "Relu";

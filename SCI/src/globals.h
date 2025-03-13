@@ -180,7 +180,7 @@ double computeAveragePower(uint64_t totalPower, int layerCount, const std::strin
 /* for execution time/duration */
 extern uint64_t ConvStartTime;
 extern uint64_t ConvEndTime;
-extern double ConvExecutionTime;
+extern uint64_t ConvExecutionTime;
 
 extern uint64_t ReluStartTime;
 extern uint64_t ReluEndTime;

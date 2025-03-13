@@ -311,6 +311,7 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
                    signedIntType strideW, intType *inputArr, intType *filterArr,
                    intType *outArr) {                
 #ifdef LOG_LAYERWISE
+  sleep(1); // Added by Tanjina to adjust the first power reading timestamp
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
 
@@ -512,6 +513,7 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
   std::cout << "Current time of end for current conv = " << cur_end
             << std::endl;
   ConvEndTime = cur_end; // Added by Tanjina to calculate the duration/execution time
+  // sleep(1); // Added by Tanjina 
 # endif
   
 /** 
@@ -524,12 +526,12 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
   ConvExecutionTime = (ConvEndTime - ConvStartTime); // Note-Tanjina: Keep in milliseconds, need to do the conversion later
  
   for(int i = 0; i < power_readings.size(); ++i){
-    uint64_t avgPower = power_readings[i].first;
+    uint64_t avgPower = power_readings[i].first; // Note-Tanjina: Keep in microwatts, need to do the conversion later
     int64_t timestampPower = power_readings[i].second;
-    double avgPowerUsage = avgPower / 1000000.0;
+    // double avgPowerUsage = avgPower / 1000000.0;
 
     ConvTotalPowerConsumption += avgPower;
-    std::cout << "Tanjina-Power usage values from the power_reading for HomConv #" << Conv_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << ConvExecutionTime << " seconds" << std::endl;
+    std::cout << "Tanjina-Power usage values from the power_reading for HomConv #" << Conv_layer_count << " : " << avgPower << " microwatts " << "Timestamp of the current power reading: " << timestampPower << " Conv layer start Timestamp: " << ConvStartTime << " Conv layer end Timestamp: " << ConvEndTime <<  " Execution time: " << ConvExecutionTime << " milliseconds" << std::endl;
     // std::cout <<  "Tanjina-NN architecture info: " << "Conv_N = " << N << " Conv_H = " << H << " Conv_W = " << W << " Conv_CI = " << CI << " Conv_FH = " << FH << " Conv_FW = " << FW << " Conv_CO = " << CO << " Conv_ zPadHLeft = " << zPadHLeft << " Conv_zPadHRight = " << zPadHRight << " Conv_zPadWLeft = " << zPadWLeft  << " Conv_zPadWRight = " << zPadWRight << " Conv_strideH = " << strideH << " Conv_strideW = " << strideW << std::endl;
     
     std::vector<csv_column_type> conv_data;
@@ -537,7 +539,9 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
     conv_data.push_back("Conv");
     conv_data.push_back(Conv_layer_count);
     conv_data.push_back(timestampPower);
-    conv_data.push_back(avgPowerUsage);
+    conv_data.push_back(avgPower);
+    conv_data.push_back(ConvStartTime);
+    conv_data.push_back(ConvEndTime);
     conv_data.push_back(ConvExecutionTime);
     conv_data.push_back(N);
     conv_data.push_back(H);
