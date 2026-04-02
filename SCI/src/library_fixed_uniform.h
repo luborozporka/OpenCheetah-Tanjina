@@ -23,6 +23,7 @@ SOFTWARE.
 #define LIBRARY_FIXED_UNIFORM_H__
 
 #include "defines_uniform.h"
+#include "session.h"
 #include "utils/ArgMapping/ArgMapping.h"
 
 // Note of the bracket around each expression use -- if this is not there, not
@@ -41,15 +42,31 @@ SOFTWARE.
 #define Arr2DIdxColM(arr, s0, s1, i, j) (*((arr) + (j) * (s0) + (i)))
 
 intType funcSSCons(int64_t x);
+intType funcSSCons(sci::Session &s, int64_t x);
+
 void funcReconstruct2PCCons(signedIntType *y, const intType *x, int len);
+void funcReconstruct2PCCons(sci::Session &s, signedIntType *y, const intType *x,
+                            int len);
+
 signedIntType funcReconstruct2PCCons(intType x, int revealParty);
+signedIntType funcReconstruct2PCCons(sci::Session &s, intType x,
+                                     int revealParty);
 
 void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType *A,
               const intType *B, intType *C, bool modelIsA);
+void MatMul2D(sci::Session &s, int32_t s1, int32_t s2, int32_t s3,
+              const intType *A, const intType *B, intType *C, bool modelIsA);
 
 void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
                    signedIntType CI, signedIntType FH, signedIntType FW,
                    signedIntType CO, signedIntType zPadHLeft,
+                   signedIntType zPadHRight, signedIntType zPadWLeft,
+                   signedIntType zPadWRight, signedIntType strideH,
+                   signedIntType strideW, intType *inputArr, intType *filterArr,
+                   intType *outArr);
+void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
+                   signedIntType W, signedIntType CI, signedIntType FH,
+                   signedIntType FW, signedIntType CO, signedIntType zPadHLeft,
                    signedIntType zPadHRight, signedIntType zPadWLeft,
                    signedIntType zPadWRight, signedIntType strideH,
                    signedIntType strideW, intType *inputArr, intType *filterArr,
@@ -62,54 +79,95 @@ void Conv2DGroupWrapper(signedIntType N, signedIntType H, signedIntType W,
                         signedIntType zPadWRight, signedIntType strideH,
                         signedIntType strideW, signedIntType G,
                         intType *inputArr, intType *filterArr, intType *outArr);
+void Conv2DGroupWrapper(sci::Session &s, signedIntType N, signedIntType H,
+                        signedIntType W, signedIntType CI, signedIntType FH,
+                        signedIntType FW, signedIntType CO,
+                        signedIntType zPadHLeft, signedIntType zPadHRight,
+                        signedIntType zPadWLeft, signedIntType zPadWRight,
+                        signedIntType strideH, signedIntType strideW,
+                        signedIntType G, intType *inputArr, intType *filterArr,
+                        intType *outArr);
 
 void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
+                                intType *multArrVec, intType *outputArr);
+void ElemWiseActModelVectorMult(sci::Session &s, int32_t size, intType *inArr,
                                 intType *multArrVec, intType *outputArr);
 
 #if USE_CHEETAH 
 void BatchNorm(int32_t B, int32_t H, int32_t W, int32_t C, 
                const intType *inputAr, const intType *scales, const intType *bias, 
                intType *outArr);
+void BatchNorm(sci::Session &s, int32_t B, int32_t H, int32_t W, int32_t C,
+               const intType *inputAr, const intType *scales,
+               const intType *bias, intType *outArr);
 #endif
 
 void ArgMax(int32_t s1, int32_t s2, intType *inArr, intType *outArr);
+void ArgMax(sci::Session &s, int32_t s1, int32_t s2, intType *inArr,
+            intType *outArr);
 
 void Relu(int32_t size, intType *inArr, intType *outArr, int sf,
           bool doTruncation);
+void Relu(sci::Session &s, int32_t size, intType *inArr, intType *outArr,
+          int sf, bool doTruncation);
 
 void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
              int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight,
              int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
              int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
              int32_t C1, intType *inArr, intType *outArr);
+void MaxPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
+             int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft,
+             int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight,
+             int32_t strideH, int32_t strideW, int32_t N1, int32_t imgH,
+             int32_t imgW, int32_t C1, intType *inArr, intType *outArr);
 
 void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
              int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight,
              int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
              int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
              int32_t C1, intType *inArr, intType *outArr);
+void AvgPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
+             int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft,
+             int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight,
+             int32_t strideH, int32_t strideW, int32_t N1, int32_t imgH,
+             int32_t imgW, int32_t C1, intType *inArr, intType *outArr);
 
 void ScaleDown(int32_t size, intType *inArr, int32_t sf);
+void ScaleDown(sci::Session &s, int32_t size, intType *inArr, int32_t sf);
 
 void ScaleUp(int32_t size, intType *arr, int32_t sf);
+void ScaleUp(sci::Session &s, int32_t size, intType *arr, int32_t sf);
 
+// Session lifecycle. These construct/destroy the process-owned
+// g_main_session; a Session& overload would be semantically wrong.
 void StartComputation();
 
 void EndComputation();
 
 intType SecretAdd(intType x, intType y);
+intType SecretAdd(sci::Session &s, intType x, intType y);
 
 intType SecretSub(intType x, intType y);
+intType SecretSub(sci::Session &s, intType x, intType y);
 
 intType SecretMult(intType x, intType y);
+intType SecretMult(sci::Session &s, intType x, intType y);
 
 void ElemWiseVectorPublicDiv(int32_t s1, intType *arr1, int32_t divisor,
                              intType *outArr);
+void ElemWiseVectorPublicDiv(sci::Session &s, int32_t s1, intType *arr1,
+                             int32_t divisor, intType *outArr);
 
 void ElemWiseSecretSharedVectorMult(int32_t size, intType *inArr,
                                     intType *multArrVec, intType *outputArr);
+void ElemWiseSecretSharedVectorMult(sci::Session &s, int32_t size,
+                                    intType *inArr, intType *multArrVec,
+                                    intType *outputArr);
 
 void Floor(int32_t s1, intType *inArr, intType *outArr, int32_t sf);
+void Floor(sci::Session &s, int32_t s1, intType *inArr, intType *outArr,
+           int32_t sf);
 
 inline void ClearMemSecret1(int32_t s1, intType *arr) { delete[] arr; }
 
