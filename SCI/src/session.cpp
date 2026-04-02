@@ -13,6 +13,14 @@ The body intentionally mirrors StartComputation() / EndComputation() in library_
 
 namespace sci {
 
+namespace {
+Session* g_current_session = nullptr;
+}  // namespace
+
+Session* CurrentSession() { return g_current_session; }
+
+void SetCurrentSession(Session* s) { g_current_session = s; }
+
 Session::Session() = default;
 
 Session::~Session() { teardown(); }

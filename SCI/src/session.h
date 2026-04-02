@@ -40,6 +40,16 @@ in SCI/src/globals.{h,cpp}.
 
 namespace sci {
 
+class Session;
+
+// Process-wide singleton accessor
+// Returns the session owned by StartComputation/EndComputation, or nullptr before / after that window
+Session* CurrentSession();
+
+// Publishes/retracts the singleton
+// Must only be called from StartComputation / EndComputation in library_fixed_uniform.cpp
+void SetCurrentSession(Session* s);
+
 class Session {
  public:
   Session();

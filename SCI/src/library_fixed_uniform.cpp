@@ -25,6 +25,7 @@ SOFTWARE.
 #include "cleartext_library_fixed_uniform.h"
 #include "functionalities_uniform.h"
 #include "library_fixed_common.h"
+#include "session.h"
 
 #include "energy_consumption.hpp"
 #include "csv_writer.hpp" // Added by Tanjina for writing the measurement values into a csv file
@@ -1716,6 +1717,112 @@ void ScaleUp(int32_t size, intType *arr, int32_t sf) {
   }
 }
 
+// Process-singleton session populated by StartComputation and torn down by EndComputation
+static sci::Session g_main_session;
+
+// Copies every pointer owned by s into the corresponding file-scope global declared in globals.cpp
+static void PublishSessionAliases(sci::Session& s) {
+  io = s.io();
+  otpack = s.otpack();
+  iknpOT = s.iknpOT();
+  iknpOTRoleReversed = s.iknpOTRoleReversed();
+  kkot = s.kkot();
+  prg128Instance = s.prg128();
+
+  relu = s.relu();
+  maxpool = s.maxpool();
+  argmax = s.argmax();
+
+  for (int i = 0; i < MAX_THREADS; i++) {
+    ioArr[i] = s.ioArr()[i];
+    otpackArr[i] = s.otpackArr()[i];
+    otInstanceArr[i] = s.otInstanceArr()[i];
+    kkotInstanceArr[i] = s.kkotInstanceArr()[i];
+    prgInstanceArr[i] = s.prgInstanceArr()[i];
+    reluArr[i] = s.reluArr()[i];
+    maxpoolArr[i] = s.maxpoolArr()[i];
+  }
+
+#ifdef SCI_OT
+  mult = s.mult();
+  aux = s.aux();
+  truncation = s.truncation();
+  xt = s.xt();
+  math = s.math();
+  multUniform = s.multUniform();
+  for (int i = 0; i < MAX_THREADS; i++) {
+    multArr[i] = s.multArr()[i];
+    auxArr[i] = s.auxArr()[i];
+    truncationArr[i] = s.truncationArr()[i];
+    xtArr[i] = s.xtArr()[i];
+    mathArr[i] = s.mathArr()[i];
+    multUniformArr[i] = s.multUniformArr()[i];
+  }
+#endif
+
+#ifdef SCI_HE
+  he_fc = s.he_fc();
+  he_prod = s.he_prod();
+#endif
+
+#if USE_CHEETAH
+  cheetah_linear = s.cheetah_linear();
+#elif defined(SCI_HE)
+  he_conv = s.he_conv();
+#endif
+}
+
+static void ClearSessionAliases() {
+  io = nullptr;
+  otpack = nullptr;
+  iknpOT = nullptr;
+  iknpOTRoleReversed = nullptr;
+  kkot = nullptr;
+  prg128Instance = nullptr;
+
+  relu = nullptr;
+  maxpool = nullptr;
+  argmax = nullptr;
+
+  for (int i = 0; i < MAX_THREADS; i++) {
+    ioArr[i] = nullptr;
+    otpackArr[i] = nullptr;
+    otInstanceArr[i] = nullptr;
+    kkotInstanceArr[i] = nullptr;
+    prgInstanceArr[i] = nullptr;
+    reluArr[i] = nullptr;
+    maxpoolArr[i] = nullptr;
+  }
+
+#ifdef SCI_OT
+  mult = nullptr;
+  aux = nullptr;
+  truncation = nullptr;
+  xt = nullptr;
+  math = nullptr;
+  multUniform = nullptr;
+  for (int i = 0; i < MAX_THREADS; i++) {
+    multArr[i] = nullptr;
+    auxArr[i] = nullptr;
+    truncationArr[i] = nullptr;
+    xtArr[i] = nullptr;
+    mathArr[i] = nullptr;
+    multUniformArr[i] = nullptr;
+  }
+#endif
+
+#ifdef SCI_HE
+  he_fc = nullptr;
+  he_prod = nullptr;
+#endif
+
+#if USE_CHEETAH
+  cheetah_linear = nullptr;
+#elif defined(SCI_HE)
+  he_conv = nullptr;
+#endif
+}
+
 void StartComputation() {
   assert(bitlength < 64 && bitlength > 0);
   assert(num_threads <= MAX_THREADS);
@@ -1746,136 +1853,21 @@ void StartComputation() {
 
   checkIfUsingEigen();
   printf("Doing BaseOT ...\n");
-  for (int i = 0; i < num_threads; i++) {
-    ioArr[i] = new sci::NetIO(party == sci::ALICE ? nullptr : address.c_str(), port + i, /*quit*/true);
-    otInstanceArr[i] = new sci::IKNP<sci::NetIO>(ioArr[i]);
-    prgInstanceArr[i] = new sci::PRG128();
-    kkotInstanceArr[i] = new sci::KKOT<sci::NetIO>(ioArr[i]);
-#ifdef SCI_OT
-    multUniformArr[i] =
-        new MatMulUniform<sci::NetIO, intType, sci::IKNP<sci::NetIO>>(
-            party, bitlength, ioArr[i], otInstanceArr[i], nullptr);
-#endif
-    if (i & 1) {
-      otpackArr[i] = new sci::OTPack<sci::NetIO>(ioArr[i], 3 - party);
-    } else {
-      otpackArr[i] = new sci::OTPack<sci::NetIO>(ioArr[i], party);
-    }
-  }
 
-  io = ioArr[0];
-  otpack = otpackArr[0];
-  iknpOT = new sci::IKNP<sci::NetIO>(io);
-  iknpOTRoleReversed = new sci::IKNP<sci::NetIO>(io);
-  kkot = new sci::KKOT<sci::NetIO>(io);
-  prg128Instance = new sci::PRG128();
-
-#ifdef SCI_OT
-  mult = new LinearOT(party, io, otpack);
-  truncation = new Truncation(party, io, otpack);
-  multUniform = new MatMulUniform<sci::NetIO, intType, sci::IKNP<sci::NetIO>>(
-      party, bitlength, io, iknpOT, iknpOTRoleReversed);
-  relu = new ReLURingProtocol<sci::NetIO, intType>(party, RING, io, bitlength,
-                                                   MILL_PARAM, otpack);
-  maxpool = new MaxPoolProtocol<sci::NetIO, intType>(
-      party, RING, io, bitlength, MILL_PARAM, 0, otpack, relu);
-  argmax = new ArgMaxProtocol<sci::NetIO, intType>(party, RING, io, bitlength,
-                                                   MILL_PARAM, 0, otpack, relu);
-  math = new MathFunctions(party, io, otpack);
-#endif
+  g_main_session.setup(party, port, address, num_threads, bitlength, kScale);
+  PublishSessionAliases(g_main_session);
+  sci::SetCurrentSession(&g_main_session);
 
 #if USE_CHEETAH
   backend += "-Cheetah";
-  cheetah_linear = new gemini::CheetahLinear(party, io, prime_mod, num_threads);
 #elif defined(SCI_HE)
   backend += "-SCI_HE";
-  he_conv = new ConvField(party, io);
+  assertFieldRun();
 #elif defined(SCI_OT)
   backend += "-SCI_OT";
 #endif
 
-
-#ifdef SCI_HE
-  relu = new ReLUFieldProtocol<sci::NetIO, intType>(
-      party, FIELD, io, bitlength, MILL_PARAM, prime_mod, otpack);
-  maxpool = new MaxPoolProtocol<sci::NetIO, intType>(
-      party, FIELD, io, bitlength, MILL_PARAM, prime_mod, otpack, relu);
-  argmax = new ArgMaxProtocol<sci::NetIO, intType>(
-      party, FIELD, io, bitlength, MILL_PARAM, prime_mod, otpack, relu);
-  he_fc = new FCField(party, io);
-  he_prod = new ElemWiseProdField(party, io);
-  assertFieldRun();
-#endif
-
-#if defined MULTITHREADED_NONLIN && defined SCI_OT
-  for (int i = 0; i < num_threads; i++) {
-    if (i & 1) {
-      reluArr[i] = new ReLURingProtocol<sci::NetIO, intType>(
-          3 - party, RING, ioArr[i], bitlength, MILL_PARAM, otpackArr[i]);
-      maxpoolArr[i] = new MaxPoolProtocol<sci::NetIO, intType>(
-          3 - party, RING, ioArr[i], bitlength, MILL_PARAM, 0, otpackArr[i],
-          reluArr[i]);
-      multArr[i] = new LinearOT(3 - party, ioArr[i], otpackArr[i]);
-      truncationArr[i] = new Truncation(3 - party, ioArr[i], otpackArr[i]);
-    } else {
-      reluArr[i] = new ReLURingProtocol<sci::NetIO, intType>(
-          party, RING, ioArr[i], bitlength, MILL_PARAM, otpackArr[i]);
-      maxpoolArr[i] = new MaxPoolProtocol<sci::NetIO, intType>(
-          party, RING, ioArr[i], bitlength, MILL_PARAM, 0, otpackArr[i],
-          reluArr[i]);
-      multArr[i] = new LinearOT(party, ioArr[i], otpackArr[i]);
-      truncationArr[i] = new Truncation(party, ioArr[i], otpackArr[i]);
-    }
-  }
-#endif
-
-#ifdef SCI_HE
-  for (int i = 0; i < num_threads; i++) {
-    if (i & 1) {
-      reluArr[i] = new ReLUFieldProtocol<sci::NetIO, intType>(
-          3 - party, FIELD, ioArr[i], bitlength, MILL_PARAM, prime_mod, otpackArr[i]);
-      maxpoolArr[i] = new MaxPoolProtocol<sci::NetIO, intType>(
-          3 - party, FIELD, ioArr[i], bitlength, MILL_PARAM, prime_mod, otpackArr[i], reluArr[i]);
-    } else {
-      reluArr[i] = new ReLUFieldProtocol<sci::NetIO, intType>(
-          party, FIELD, ioArr[i], bitlength, MILL_PARAM, prime_mod, otpackArr[i]);
-      maxpoolArr[i] = new MaxPoolProtocol<sci::NetIO, intType>(
-          party, FIELD, ioArr[i], bitlength, MILL_PARAM, prime_mod, otpackArr[i], reluArr[i]);
-    }
-  }
-#endif
-
-// Math Protocols
-#ifdef SCI_OT
-  for (int i = 0; i < num_threads; i++) {
-    if (i & 1) {
-      auxArr[i] = new AuxProtocols(3 - party, ioArr[i], otpackArr[i]);
-      truncationArr[i] =
-          new Truncation(3 - party, ioArr[i], otpackArr[i], auxArr[i]);
-      xtArr[i] = new XTProtocol(3 - party, ioArr[i], otpackArr[i], auxArr[i]);
-      mathArr[i] = new MathFunctions(3 - party, ioArr[i], otpackArr[i]);
-    } else {
-      auxArr[i] = new AuxProtocols(party, ioArr[i], otpackArr[i]);
-      truncationArr[i] =
-          new Truncation(party, ioArr[i], otpackArr[i], auxArr[i]);
-      xtArr[i] = new XTProtocol(party, ioArr[i], otpackArr[i], auxArr[i]);
-      mathArr[i] = new MathFunctions(party, ioArr[i], otpackArr[i]);
-    }
-  }
-  aux = auxArr[0];
-  truncation = truncationArr[0];
-  xt = xtArr[0];
-  mult = multArr[0];
-  math = mathArr[0];
-#endif
-
-  if (party == sci::ALICE) {
-    iknpOT->setup_send();
-    iknpOTRoleReversed->setup_recv();
-  } else if (party == sci::BOB) {
-    iknpOT->setup_recv();
-    iknpOTRoleReversed->setup_send();
-  }
+  g_main_session.start_base_ot();
 
   std::cout << "After one-time setup, communication" << std::endl;
   start_time = std::chrono::high_resolution_clock::now();
@@ -2197,6 +2189,10 @@ void EndComputation() {
     io->send_data(&NormaliseL2CommSent, sizeof(uint64_t));
   }
 #endif
+
+  sci::SetCurrentSession(nullptr);
+  ClearSessionAliases();
+  g_main_session.teardown();
 }
 
 intType SecretAdd(intType x, intType y) {
