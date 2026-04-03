@@ -73,6 +73,11 @@ void initialize() {
   }
 }
 
+void initialize(sci::Session &s) {
+  (void)s;
+  initialize();
+}
+
 void finalize() {
   for (int i = 0; i < num_threads; i++) {
     delete ioArr[i];
@@ -95,11 +100,22 @@ void finalize() {
 #endif
 }
 
+void finalize(sci::Session &s) {
+  (void)s;
+  finalize();
+}
+
 void reconstruct(int64_t *A, int64_t *B, int32_t I, int32_t J, int bwA) {
   reconstruct(I * J, (uint64_t *)A, (uint64_t *)B, bwA);
   for (int i = 0; i < I * J; i++) {
     B[i] = signed_val((uint64_t)B[i], bwA);
   }
+}
+
+void reconstruct(sci::Session &s, int64_t *A, int64_t *B, int32_t I, int32_t J,
+                 int bwA) {
+  (void)s;
+  reconstruct(A, B, I, J, bwA);
 }
 
 void reconstruct(int dim, uint64_t *x, uint64_t *y, int bw_x) {
@@ -117,6 +133,11 @@ void reconstruct(int dim, uint64_t *x, uint64_t *y, int bw_x) {
   }
 }
 
+void reconstruct(sci::Session &s, int dim, uint64_t *x, uint64_t *y, int bw_x) {
+  (void)s;
+  reconstruct(dim, x, y, bw_x);
+}
+
 void typecast_to_uint64(int64_t *A, uint64_t *A64, int32_t I, int32_t J,
                         int32_t bwA) {
   uint64_t mask = (bwA == 64 ? -1 : ((1ULL << bwA) - 1));
@@ -125,6 +146,12 @@ void typecast_to_uint64(int64_t *A, uint64_t *A64, int32_t I, int32_t J,
     A64[i] = uint64_t(A[i]) & mask;
   }
   return;
+}
+
+void typecast_to_uint64(sci::Session &s, int64_t *A, uint64_t *A64, int32_t I,
+                        int32_t J, int32_t bwA) {
+  (void)s;
+  typecast_to_uint64(A, A64, I, J, bwA);
 }
 
 void typecast_from_uint64(uint64_t *A64, int64_t *A, int32_t I, int32_t J,
@@ -140,6 +167,12 @@ void typecast_from_uint64(uint64_t *A64, int64_t *A, int32_t I, int32_t J,
       A[i] = int64_t(A64[i]);
   }
   return;
+}
+
+void typecast_from_uint64(sci::Session &s, uint64_t *A64, int64_t *A, int32_t I,
+                          int32_t J, int bwA) {
+  (void)s;
+  typecast_from_uint64(A64, A, I, J, bwA);
 }
 
 void reconstruct(uint64_t *A, int64_t *B, int32_t I, int32_t J, int bwA) {
@@ -2621,3 +2654,373 @@ void output_vector(int64_t *x, int32_t I, int32_t J, int32_t bwX) {
   }
   delete[] y;
 }
+
+void AdjustScaleShr(sci::Session &s, uint64_t *A, uint64_t *B, int32_t I,
+                    int32_t J, int32_t bwA, int32_t scale) {
+  (void)s;
+  AdjustScaleShr(A, B, I, J, bwA, scale);
+}
+
+void AdjustScaleShr(sci::Session &s, int32_t I, int32_t J, int32_t scale,
+                    int64_t bwA, int64_t *A) {
+  (void)s;
+  AdjustScaleShr(I, J, scale, bwA, A);
+}
+
+void MatAdd(sci::Session &s, uint64_t *A, uint64_t *B, uint64_t *C, int32_t I,
+            int32_t J, int32_t bwA, int32_t bwB, int32_t bwC, int32_t bwTemp,
+            int32_t shrA, int32_t shrB, int32_t shrC, int32_t demote,
+            bool subroutine) {
+  (void)s;
+  MatAdd(A, B, C, I, J, bwA, bwB, bwC, bwTemp, shrA, shrB, shrC, demote,
+         subroutine);
+}
+
+void MatAddBroadCast(sci::Session &s, uint64_t *A, uint64_t *B, uint64_t *C,
+                     int32_t I, int32_t J, int32_t bwA, int32_t bwB,
+                     int32_t bwC, int32_t bwTemp, int32_t shrA, int32_t shrB,
+                     int32_t shrC, int32_t demote, bool scalar_A) {
+  (void)s;
+  MatAddBroadCast(A, B, C, I, J, bwA, bwB, bwC, bwTemp, shrA, shrB, shrC,
+                  demote, scalar_A);
+}
+
+void AddOrSubCir(sci::Session &s, uint64_t *A, uint64_t *B, uint64_t *C,
+                 int32_t I, int32_t J, int32_t bwA, int32_t bwB, int32_t bwC,
+                 int32_t bwTemp, int32_t shrA, int32_t shrB, int32_t shrC,
+                 bool add, int32_t demote) {
+  (void)s;
+  AddOrSubCir(A, B, C, I, J, bwA, bwB, bwC, bwTemp, shrA, shrB, shrC, add,
+              demote);
+}
+
+void AddOrSubCir4D(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
+                   int32_t shrA, int32_t shrB, int32_t shrC, bool add,
+                   int32_t demote, int32_t bwA, int32_t bwB, int32_t bwTemp,
+                   int32_t bwC, int64_t *A, int64_t *B, int64_t *X) {
+  (void)s;
+  AddOrSubCir4D(N, H, W, C, shrA, shrB, shrC, add, demote, bwA, bwB, bwTemp,
+                bwC, A, B, X);
+}
+
+void Exp(sci::Session &s, uint64_t *A, uint64_t *B, int32_t I, int32_t J,
+         int32_t bwA, int32_t bwB, int32_t sA, int32_t sB) {
+  (void)s;
+  Exp(A, B, I, J, bwA, bwB, sA, sB);
+}
+
+void Div(sci::Session &s, uint64_t *A, uint64_t *B, uint64_t *C, int32_t I,
+         int32_t J, int32_t bwA, int32_t bwB, int32_t bwC, int32_t sA,
+         int32_t sB, int32_t sC) {
+  (void)s;
+  Div(A, B, C, I, J, bwA, bwB, bwC, sA, sB, sC);
+}
+
+void ArgMax(sci::Session &s, uint64_t *A, int32_t I, int32_t J, int32_t bwA,
+            int32_t bw_index, uint64_t *index) {
+  (void)s;
+  ArgMax(A, I, J, bwA, bw_index, index);
+}
+
+void MaxPool2D(sci::Session &s, uint64_t *A, int32_t I, int32_t J, int32_t bwA,
+               int32_t bwB, uint64_t *B) {
+  (void)s;
+  MaxPool2D(A, I, J, bwA, bwB, B);
+}
+
+void MaxPool2D(sci::Session &s, int I, int J, int bwA, int bwB, int64_t *A,
+               int64_t *B) {
+  (void)s;
+  MaxPool2D(I, J, bwA, bwB, A, B);
+}
+
+void Convolution(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t CIN,
+                 int32_t HF, int32_t WF, int32_t CINF, int32_t COUTF,
+                 int32_t HOUT, int32_t WOUT, int32_t HPADL, int32_t HPADR,
+                 int32_t WPADL, int32_t WPADR, int32_t HSTR, int32_t WSTR,
+                 int32_t HDL, int32_t WDL, int32_t G, int32_t bwA, int32_t bwB,
+                 int32_t bwC, int32_t bwTemp, int32_t shrA, int32_t shrB,
+                 int32_t H1, int32_t H2, int32_t demote, uint64_t *A,
+                 uint64_t *B, uint64_t *C) {
+  (void)s;
+  Convolution(N, H, W, CIN, HF, WF, CINF, COUTF, HOUT, WOUT, HPADL, HPADR,
+              WPADL, WPADR, HSTR, WSTR, HDL, WDL, G, bwA, bwB, bwC, bwTemp,
+              shrA, shrB, H1, H2, demote, A, B, C);
+}
+
+void Convolution(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t CIN,
+                 int32_t HF, int32_t WF, int32_t CINF, int32_t COUTF,
+                 int32_t HOUT, int32_t WOUT, int32_t HPADL, int32_t HPADR,
+                 int32_t WPADL, int32_t WPADR, int32_t HSTR, int32_t WSTR,
+                 int32_t HDL, int32_t WDL, int32_t G, int32_t shrA,
+                 int32_t shrB, int32_t H1, int32_t H2, int32_t demote,
+                 int32_t bwA, int32_t bwB, int32_t bwTemp, int32_t bwC,
+                 int64_t *A, int64_t *B, int64_t *C, int64_t *tmp,
+                 bool verbose) {
+  (void)s;
+  Convolution(N, H, W, CIN, HF, WF, CINF, COUTF, HOUT, WOUT, HPADL, HPADR,
+              WPADL, WPADR, HSTR, WSTR, HDL, WDL, G, shrA, shrB, H1, H2, demote,
+              bwA, bwB, bwTemp, bwC, A, B, C, tmp, verbose);
+}
+
+void ReLU(sci::Session &s, uint64_t *A, uint64_t *B, int32_t I, int32_t J,
+          int32_t bwA, int32_t bwB, uint64_t six, int32_t div) {
+  (void)s;
+  ReLU(A, B, I, J, bwA, bwB, six, div);
+}
+
+void Relu6(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
+           int64_t six, int32_t div, int32_t bwA, int32_t bwB, int64_t *A,
+           int64_t *B) {
+  (void)s;
+  Relu6(N, H, W, C, six, div, bwA, bwB, A, B);
+}
+
+void BNorm(sci::Session &s, uint64_t *A, uint64_t *BNW, uint64_t *BNB,
+           uint64_t *B, int32_t I, int32_t J, int32_t bwA, int32_t bwBNW,
+           int32_t bwBNB, int32_t bwTemp, int32_t bwB, int32_t shA,
+           int32_t shBNB, int32_t shB) {
+  (void)s;
+  BNorm(A, BNW, BNB, B, I, J, bwA, bwBNW, bwBNB, bwTemp, bwB, shA, shBNB, shB);
+}
+
+void NormaliseL2(sci::Session &s, uint64_t *A, uint64_t *B, int32_t I,
+                 int32_t J, int32_t bwA, int32_t scaleA, int32_t shrA) {
+  (void)s;
+  NormaliseL2(A, B, I, J, bwA, scaleA, shrA);
+}
+
+void BNorm(sci::Session &s, int32_t I, int32_t J, int32_t shA, int32_t shBNB,
+           int32_t shB, int32_t bwA, int32_t bwBNW, int32_t bwBNB,
+           int32_t bwTemp, int32_t bwB, int64_t *A, int64_t *BNW, int64_t *BNB,
+           int64_t *B) {
+  (void)s;
+  BNorm(I, J, shA, shBNB, shB, bwA, bwBNW, bwBNB, bwTemp, bwB, A, BNW, BNB, B);
+}
+
+void NormaliseL2(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
+                 int32_t scaleA, int32_t shrA, int32_t bwA, int64_t *A,
+                 int64_t *B) {
+  (void)s;
+  NormaliseL2(N, H, W, C, scaleA, shrA, bwA, A, B);
+}
+
+void MBConv(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t Cin,
+            int32_t Ct, int32_t HF, int32_t WF, int32_t Cout, int32_t Hout,
+            int32_t Wout, int32_t HPADL, int32_t HPADR, int32_t WPADL,
+            int32_t WPADR, int32_t HSTR, int32_t WSTR, int32_t D1, int32_t D2,
+            int32_t D3, int64_t SIX_1, int64_t SIX_2, int32_t shr1,
+            int32_t shr2, int32_t shr3, int32_t shr4, int32_t shr5,
+            int32_t shr6, int32_t shr7, int32_t shr8, int32_t shr9,
+            int32_t shl1, int32_t shl2, int32_t shl3, int32_t shl4,
+            int32_t shl5, int32_t shl6, int32_t shl7, int32_t shl8,
+            int32_t shl9, int32_t bwA, int32_t bwF1, int32_t bwB1W,
+            int32_t bwB1B, int32_t bwF2, int32_t bwB2W, int32_t bwB2B,
+            int32_t bwF3, int32_t bwB3W, int32_t bwB3B, int32_t bwC,
+            int32_t bwX, int32_t bwT, int32_t bwU, int32_t bwUB1W,
+            int32_t bwUB2W, int32_t bwUB3W, int64_t *A, int64_t *F1,
+            int64_t *BN1W, int64_t *BN1B, int64_t *F2, int64_t *BN2W,
+            int64_t *BN2B, int64_t *F3, int64_t *BN3W, int64_t *BN3B,
+            int64_t *C, int64_t *X, int64_t *T, int64_t *U) {
+  (void)s;
+  MBConv(N, H, W, Cin, Ct, HF, WF, Cout, Hout, Wout, HPADL, HPADR, WPADL,
+         WPADR, HSTR, WSTR, D1, D2, D3, SIX_1, SIX_2, shr1, shr2, shr3, shr4,
+         shr5, shr6, shr7, shr8, shr9, shl1, shl2, shl3, shl4, shl5, shl6,
+         shl7, shl8, shl9, bwA, bwF1, bwB1W, bwB1B, bwF2, bwB2W, bwB2B, bwF3,
+         bwB3W, bwB3B, bwC, bwX, bwT, bwU, bwUB1W, bwUB2W, bwUB3W, A, F1, BN1W,
+         BN1B, F2, BN2W, BN2B, F3, BN3W, BN3B, C, X, T, U);
+}
+
+void output_vector(sci::Session &s, int64_t *x, int32_t I, int32_t J,
+                   int32_t bwX) {
+  (void)s;
+  output_vector(x, I, J, bwX);
+}
+
+void MatAdd(sci::Session &s, int64_t I, int64_t J, int64_t shrA, int64_t shrB,
+            int64_t shrC, int64_t demote, int64_t bwA, int64_t bwB,
+            int64_t bwTemp, int64_t bwC, int64_t *A, int64_t *B, int64_t *C,
+            bool verbose) {
+  (void)s;
+  MatAdd(I, J, shrA, shrB, shrC, demote, bwA, bwB, bwTemp, bwC, A, B, C,
+         verbose);
+}
+
+void MatAdd4(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
+             int32_t shrA, int32_t shrB, int32_t shrC, int32_t demote,
+             int32_t bwA, int32_t bwB, int32_t bwTemp, int32_t bwC, int64_t *A,
+             int64_t *B, int64_t *X) {
+  (void)s;
+  MatAdd4(N, H, W, C, shrA, shrB, shrC, demote, bwA, bwB, bwTemp, bwC, A, B, X);
+}
+
+void MatSub(sci::Session &s, int64_t I, int64_t J, int64_t shrA, int64_t shrB,
+            int64_t shrC, int64_t demote, int64_t bwA, int64_t bwB,
+            int64_t bwTemp, int64_t bwC, int64_t *A, int64_t *B, int64_t *C) {
+  (void)s;
+  MatSub(I, J, shrA, shrB, shrC, demote, bwA, bwB, bwTemp, bwC, A, B, C);
+}
+
+void MatAddBroadCastA(sci::Session &s, int64_t I, int64_t J, int64_t shrA,
+                      int64_t shrB, int64_t shrC, int64_t demote, int64_t bwA,
+                      int64_t bwB, int64_t bwTemp, int64_t bwC, int64_t A,
+                      int64_t *B, int64_t *C, bool verbose) {
+  (void)s;
+  MatAddBroadCastA(I, J, shrA, shrB, shrC, demote, bwA, bwB, bwTemp, bwC, A, B,
+                   C, verbose);
+}
+
+void MatAddBroadCastB(sci::Session &s, int64_t I, int64_t J, int64_t shrA,
+                      int64_t shrB, int64_t shrC, int64_t demote, int64_t bwA,
+                      int64_t bwB, int64_t bwTemp, int64_t bwC, int64_t *A,
+                      int64_t B, int64_t *C, bool verbose) {
+  (void)s;
+  MatAddBroadCastB(I, J, shrA, shrB, shrC, demote, bwA, bwB, bwTemp, bwC, A, B,
+                   C, verbose);
+}
+
+void MatSubBroadCastA(sci::Session &s, int64_t I, int64_t J, int64_t shrA,
+                      int64_t shrB, int64_t shrC, int64_t demote, int64_t bwA,
+                      int64_t bwB, int64_t bwTemp, int64_t bwC, int64_t A,
+                      int64_t *B, int64_t *C) {
+  (void)s;
+  MatSubBroadCastA(I, J, shrA, shrB, shrC, demote, bwA, bwB, bwTemp, bwC, A, B,
+                   C);
+}
+
+void MatSubBroadCastB(sci::Session &s, int64_t I, int64_t J, int64_t shrA,
+                      int64_t shrB, int64_t shrC, int64_t demote, int64_t bwA,
+                      int64_t bwB, int64_t bwTemp, int64_t bwC, int64_t *A,
+                      int64_t B, int64_t *C) {
+  (void)s;
+  MatSubBroadCastB(I, J, shrA, shrB, shrC, demote, bwA, bwB, bwTemp, bwC, A, B,
+                   C);
+}
+
+void MulCir(sci::Session &s, int64_t I, int64_t J, int64_t shrA, int64_t shrB,
+            int64_t demote, int64_t bwA, int64_t bwB, int64_t bwTemp,
+            int64_t bwC, uint64_t *A, uint64_t *B, uint64_t *C) {
+  (void)s;
+  MulCir(I, J, shrA, shrB, demote, bwA, bwB, bwTemp, bwC, A, B, C);
+}
+
+void MulCir(sci::Session &s, int64_t I, int64_t J, int64_t shrA, int64_t shrB,
+            int64_t demote, int64_t bwA, int64_t bwB, int64_t bwTemp,
+            int64_t bwC, int64_t *A, int64_t *B, int64_t *C) {
+  (void)s;
+  MulCir(I, J, shrA, shrB, demote, bwA, bwB, bwTemp, bwC, A, B, C);
+}
+
+void MatMul(sci::Session &s, int64_t I, int64_t K, int64_t J, int64_t shrA,
+            int64_t shrB, int64_t H1, int64_t H2, int64_t demote, int32_t bwA,
+            int32_t bwB, int32_t bwTemp, int32_t bwC, int64_t *A, int64_t *B,
+            int64_t *C, int64_t *tmp, bool verbose) {
+  (void)s;
+  MatMul(I, K, J, shrA, shrB, H1, H2, demote, bwA, bwB, bwTemp, bwC, A, B, C,
+         tmp, verbose);
+}
+
+void MatMul(sci::Session &s, int64_t I, int64_t K, int64_t J, int64_t shrA,
+            int64_t shrB, int64_t H1, int64_t H2, int64_t demote, int32_t bwA,
+            int32_t bwB, int32_t bwTemp, int32_t bwC, uint64_t *A, uint64_t *B,
+            uint64_t *C, uint64_t *tmp, bool verbose) {
+  (void)s;
+  MatMul(I, K, J, shrA, shrB, H1, H2, demote, bwA, bwB, bwTemp, bwC, A, B, C,
+         tmp, verbose);
+}
+
+void ScalarMul(sci::Session &s, uint64_t *A, uint64_t *B, uint64_t *C,
+               int32_t I, int32_t J, int32_t bwA, int32_t bwB, int32_t bwTemp,
+               int32_t bwC, int32_t shrA, int32_t shrB, int32_t demote) {
+  (void)s;
+  ScalarMul(A, B, C, I, J, bwA, bwB, bwTemp, bwC, shrA, shrB, demote);
+}
+
+void ScalarMul(sci::Session &s, int64_t I, int64_t J, int64_t shrA,
+               int64_t shrB, int64_t demote, int64_t bwA, int64_t bwB,
+               int64_t bwTemp, int64_t bwC, int64_t A, int64_t *B, int64_t *C) {
+  (void)s;
+  ScalarMul(I, J, shrA, shrB, demote, bwA, bwB, bwTemp, bwC, A, B, C);
+}
+
+void Sigmoid(sci::Session &s, int64_t I, int64_t J, int64_t scale_in,
+             int64_t scale_out, int64_t bwA, int64_t bwB, uint64_t *A,
+             uint64_t *B) {
+  (void)s;
+  Sigmoid(I, J, scale_in, scale_out, bwA, bwB, A, B);
+}
+
+void Sigmoid(sci::Session &s, int64_t I, int64_t J, int64_t scale_in,
+             int64_t scale_out, int64_t bwA, int64_t bwB, int64_t *A,
+             int64_t *B) {
+  (void)s;
+  Sigmoid(I, J, scale_in, scale_out, bwA, bwB, A, B);
+}
+
+void TanH(sci::Session &s, int64_t I, int64_t J, int64_t scale_in,
+          int64_t scale_out, int64_t bwA, int64_t bwB, int64_t *A, int64_t *B) {
+  (void)s;
+  TanH(I, J, scale_in, scale_out, bwA, bwB, A, B);
+}
+
+void TanH(sci::Session &s, int64_t I, int64_t J, int64_t scale_in,
+          int64_t scale_out, int64_t bwA, int64_t bwB, uint64_t *A,
+          uint64_t *B) {
+  (void)s;
+  TanH(I, J, scale_in, scale_out, bwA, bwB, A, B);
+}
+
+void Sqrt(sci::Session &s, int64_t I, int64_t J, int64_t scale_in,
+          int64_t scale_out, int64_t bwA, int64_t bwB, bool inverse,
+          uint64_t *A, uint64_t *B) {
+  (void)s;
+  Sqrt(I, J, scale_in, scale_out, bwA, bwB, inverse, A, B);
+}
+
+void AdjustScaleShl(sci::Session &s, int64_t I, int64_t J, int64_t scale,
+                    int64_t *A) {
+  (void)s;
+  AdjustScaleShl(I, J, scale, A);
+}
+
+void ArgMax(sci::Session &s, int64_t I, int64_t J, int32_t bwA,
+            int32_t bw_index, int64_t *A, int64_t *index) {
+  (void)s;
+  ArgMax(I, J, bwA, bw_index, A, index);
+}
+
+void Exp(sci::Session &s, int32_t I, int32_t J, int32_t shrA, int32_t shrB,
+         int32_t bwA, int64_t *A, int64_t *B) {
+  (void)s;
+  Exp(I, J, shrA, shrB, bwA, A, B);
+}
+
+void Div(sci::Session &s, int32_t I, int32_t J, int32_t shrA, int32_t shrB,
+         int32_t shrC, int32_t bwA, int64_t *A, int64_t *B, int64_t *C) {
+  (void)s;
+  Div(I, J, shrA, shrB, shrC, bwA, A, B, C);
+}
+
+// Athos int32_t wrappers: match the #ifdef SCI_OT gating in the header.
+#ifdef SCI_OT
+void Sigmoid(sci::Session &s, int32_t I, int32_t J, int32_t scale_in,
+             int32_t scale_out, int32_t bwA, int32_t bwB, uint64_t *A,
+             uint64_t *B) {
+  (void)s;
+  Sigmoid(I, J, scale_in, scale_out, bwA, bwB, A, B);
+}
+
+void TanH(sci::Session &s, int32_t I, int32_t J, int32_t scale_in,
+          int32_t scale_out, int32_t bwA, int32_t bwB, uint64_t *A,
+          uint64_t *B) {
+  (void)s;
+  TanH(I, J, scale_in, scale_out, bwA, bwB, A, B);
+}
+
+void Sqrt(sci::Session &s, int32_t I, int32_t J, int32_t scale_in,
+          int32_t scale_out, int32_t bwA, int32_t bwB, bool inverse,
+          uint64_t *A, uint64_t *B) {
+  (void)s;
+  Sqrt(I, J, scale_in, scale_out, bwA, bwB, inverse, A, B);
+}
+#endif

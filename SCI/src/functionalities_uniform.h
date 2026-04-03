@@ -23,6 +23,8 @@ SOFTWARE.
 #define FUNCTIONALITIES_UNIFORM_H__
 
 #include "globals.h"
+#include "library_fixed_uniform.h"
+#include "session.h"
 #include <cmath>
 
 void funcLocalTruncate(int s, intType *arr, int consSF) {
@@ -75,6 +77,11 @@ intType funcSSCons(int64_t x) {
   }
 }
 
+inline intType funcSSCons(sci::Session &s, int64_t x) {
+  (void)s;
+  return funcSSCons(x);
+}
+
 inline intType getFieldMsb(intType x) { return (x > (prime_mod / 2)); }
 
 void funcReconstruct2PCCons(signedIntType *y, const intType *x, int len) {
@@ -103,6 +110,12 @@ void funcReconstruct2PCCons(signedIntType *y, const intType *x, int len) {
   return;
 }
 
+inline void funcReconstruct2PCCons(sci::Session &s, signedIntType *y,
+                                   const intType *x, int len) {
+  (void)s;
+  funcReconstruct2PCCons(y, x, len);
+}
+
 signedIntType funcReconstruct2PCCons(intType x, int revealParty) {
   assert(revealParty == 2 && "Reveal to only client is supported right now.");
   intType temp = 0;
@@ -122,6 +135,12 @@ signedIntType funcReconstruct2PCCons(intType x, int revealParty) {
     }
   }
   return ans;
+}
+
+inline signedIntType funcReconstruct2PCCons(sci::Session &s, intType x,
+                                            int revealParty) {
+  (void)s;
+  return funcReconstruct2PCCons(x, revealParty);
 }
 
 signedIntType div_floor(signedIntType a, signedIntType b) {

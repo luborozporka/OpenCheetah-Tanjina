@@ -7,6 +7,8 @@
 #include "cheetah/cheetah-api.h"
 #include "defines_uniform.h"
 #include "globals.h"
+#include "library_fixed_uniform.h"
+#include "session.h"
 #include "energy_consumption.hpp"
 #include "csv_writer.hpp" // Added by Tanjina for writing the measurement values into a csv file
 
@@ -260,6 +262,13 @@ void MatMul2D(int32_t d0, int32_t d1, int32_t d2, const intType *mat_A,
     delete[] VC;
   }
 #endif
+}
+
+void MatMul2D(sci::Session &s, int32_t d0, int32_t d1, int32_t d2,
+              const intType *mat_A, const intType *mat_B, intType *mat_C,
+              bool is_A_weight_matrix) {
+  (void)s;
+  MatMul2D(d0, d1, d2, mat_A, mat_B, mat_C, is_A_weight_matrix);
 }
 
 void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
@@ -557,6 +566,18 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
 
 }
 
+void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
+                   signedIntType W, signedIntType CI, signedIntType FH,
+                   signedIntType FW, signedIntType CO, signedIntType zPadHLeft,
+                   signedIntType zPadHRight, signedIntType zPadWLeft,
+                   signedIntType zPadWRight, signedIntType strideH,
+                   signedIntType strideW, intType *inputArr, intType *filterArr,
+                   intType *outArr) {
+  (void)s;
+  Conv2DWrapper(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft,
+                zPadWRight, strideH, strideW, inputArr, filterArr, outArr);
+}
+
 void BatchNorm(int32_t B, int32_t H, int32_t W, int32_t C,
                const intType *inputArr, const intType *scales,
                const intType *bias, intType *outArr) {
@@ -680,6 +701,13 @@ void BatchNorm(int32_t B, int32_t H, int32_t W, int32_t C,
   }       
 #endif
 
+}
+
+void BatchNorm(sci::Session &s, int32_t B, int32_t H, int32_t W, int32_t C,
+               const intType *inputArr, const intType *scales,
+               const intType *bias, intType *outArr) {
+  (void)s;
+  BatchNorm(B, H, W, C, inputArr, scales, bias, outArr);
 }
 
 void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
@@ -830,5 +858,11 @@ void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
   }
 #endif  
 
+}
+
+void ElemWiseActModelVectorMult(sci::Session &s, int32_t size, intType *inArr,
+                                intType *multArrVec, intType *outputArr) {
+  (void)s;
+  ElemWiseActModelVectorMult(size, inArr, multArrVec, outputArr);
 }
 #endif

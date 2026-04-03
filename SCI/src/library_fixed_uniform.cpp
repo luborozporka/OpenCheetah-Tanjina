@@ -263,6 +263,12 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType *A,
   }
 #endif
 }
+
+void MatMul2D(sci::Session &s, int32_t s1, int32_t s2, int32_t s3,
+              const intType *A, const intType *B, intType *C, bool modelIsA) {
+  (void)s;
+  MatMul2D(s1, s2, s3, A, B, C, modelIsA);
+}
 #endif
 
 static void Conv2D(int32_t N, int32_t H, int32_t W, int32_t CI, int32_t FH,
@@ -565,6 +571,18 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
 
 }
 
+void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
+                   signedIntType W, signedIntType CI, signedIntType FH,
+                   signedIntType FW, signedIntType CO, signedIntType zPadHLeft,
+                   signedIntType zPadHRight, signedIntType zPadWLeft,
+                   signedIntType zPadWRight, signedIntType strideH,
+                   signedIntType strideW, intType *inputArr, intType *filterArr,
+                   intType *outArr) {
+  (void)s;
+  Conv2DWrapper(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft,
+                zPadWRight, strideH, strideW, inputArr, filterArr, outArr);
+}
+
 #endif
 
 #ifdef SCI_OT
@@ -618,6 +636,20 @@ void Conv2DGroupWrapper(signedIntType N, signedIntType H, signedIntType W,
   FIND_ALL_IO_TILL_NOW(curComm);
   ConvCommSent += curComm;
 #endif
+}
+
+void Conv2DGroupWrapper(sci::Session &s, signedIntType N, signedIntType H,
+                        signedIntType W, signedIntType CI, signedIntType FH,
+                        signedIntType FW, signedIntType CO,
+                        signedIntType zPadHLeft, signedIntType zPadHRight,
+                        signedIntType zPadWLeft, signedIntType zPadWRight,
+                        signedIntType strideH, signedIntType strideW,
+                        signedIntType G, intType *inputArr, intType *filterArr,
+                        intType *outArr) {
+  (void)s;
+  Conv2DGroupWrapper(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft,
+                     zPadWRight, strideH, strideW, G, inputArr, filterArr,
+                     outArr);
 }
 
 #if !USE_CHEETAH
@@ -762,6 +794,12 @@ void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
   }
 #endif
 }
+
+void ElemWiseActModelVectorMult(sci::Session &s, int32_t size, intType *inArr,
+                                intType *multArrVec, intType *outputArr) {
+  (void)s;
+  ElemWiseActModelVectorMult(size, inArr, multArrVec, outputArr);
+}
 #endif
 
 void ArgMax(int32_t s1, int32_t s2, intType *inArr, intType *outArr) {
@@ -883,6 +921,12 @@ void ArgMax(int32_t s1, int32_t s2, intType *inArr, intType *outArr) {
   }
         
 #endif
+}
+
+void ArgMax(sci::Session &s, int32_t s1, int32_t s2, intType *inArr,
+            intType *outArr) {
+  (void)s;
+  ArgMax(s1, s2, inArr, outArr);
 }
 
 void Relu(int32_t size, intType *inArr, intType *outArr, int sf, bool doTruncation) {
@@ -1114,6 +1158,12 @@ void Relu(int32_t size, intType *inArr, intType *outArr, int sf, bool doTruncati
   delete[] tempInp;
   delete[] tempOutp;
   delete[] msbShare;
+}
+
+void Relu(sci::Session &s, int32_t size, intType *inArr, intType *outArr,
+          int sf, bool doTruncation) {
+  (void)s;
+  Relu(size, inArr, outArr, sf, doTruncation);
 }
 
 void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
@@ -1383,6 +1433,16 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
 
 }
 
+void MaxPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
+             int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft,
+             int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight,
+             int32_t strideH, int32_t strideW, int32_t N1, int32_t imgH,
+             int32_t imgW, int32_t C1, intType *inArr, intType *outArr) {
+  (void)s;
+  MaxPool(N, H, W, C, ksizeH, ksizeW, zPadHLeft, zPadHRight, zPadWLeft,
+          zPadWRight, strideH, strideW, N1, imgH, imgW, C1, inArr, outArr);
+}
+
 void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
              int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight,
              int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
@@ -1615,6 +1675,16 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
 
 }
 
+void AvgPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
+             int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft,
+             int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight,
+             int32_t strideH, int32_t strideW, int32_t N1, int32_t imgH,
+             int32_t imgW, int32_t C1, intType *inArr, intType *outArr) {
+  (void)s;
+  AvgPool(N, H, W, C, ksizeH, ksizeW, zPadHLeft, zPadHRight, zPadWLeft,
+          zPadWRight, strideH, strideW, N1, imgH, imgW, C1, inArr, outArr);
+}
+
 void ScaleDown(int32_t size, intType *inArr, int32_t sf) {
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
@@ -1707,6 +1777,11 @@ void ScaleDown(int32_t size, intType *inArr, int32_t sf) {
   if (size != eightDivElemts) delete[] tempInp;
 }
 
+void ScaleDown(sci::Session &s, int32_t size, intType *inArr, int32_t sf) {
+  (void)s;
+  ScaleDown(size, inArr, sf);
+}
+
 void ScaleUp(int32_t size, intType *arr, int32_t sf) {
   for (int i = 0; i < size; i++) {
 #ifdef SCI_OT
@@ -1715,6 +1790,11 @@ void ScaleUp(int32_t size, intType *arr, int32_t sf) {
     arr[i] = sci::neg_mod(arr[i] << sf, (int64_t)prime_mod);
 #endif
   }
+}
+
+void ScaleUp(sci::Session &s, int32_t size, intType *arr, int32_t sf) {
+  (void)s;
+  ScaleUp(size, arr, sf);
 }
 
 // Process-singleton session populated by StartComputation and torn down by EndComputation
@@ -2203,6 +2283,11 @@ intType SecretAdd(intType x, intType y) {
 #endif
 }
 
+intType SecretAdd(sci::Session &s, intType x, intType y) {
+  (void)s;
+  return SecretAdd(x, y);
+}
+
 intType SecretSub(intType x, intType y) {
 #ifdef SCI_OT
   return (x - y);
@@ -2211,9 +2296,19 @@ intType SecretSub(intType x, intType y) {
 #endif
 }
 
+intType SecretSub(sci::Session &s, intType x, intType y) {
+  (void)s;
+  return SecretSub(x, y);
+}
+
 intType SecretMult(intType x, intType y) {
   // assert(false);
   return x * y;
+}
+
+intType SecretMult(sci::Session &s, intType x, intType y) {
+  (void)s;
+  return SecretMult(x, y);
 }
 
 void ElemWiseVectorPublicDiv(int32_t s1, intType *arr1, int32_t divisor,
@@ -2248,6 +2343,12 @@ void ElemWiseVectorPublicDiv(int32_t s1, intType *arr1, int32_t divisor,
   }
 
   return;
+}
+
+void ElemWiseVectorPublicDiv(sci::Session &s, int32_t s1, intType *arr1,
+                             int32_t divisor, intType *outArr) {
+  (void)s;
+  ElemWiseVectorPublicDiv(s1, arr1, divisor, outArr);
 }
 
 void ElemWiseSecretSharedVectorMult(int32_t size, intType *inArr,
@@ -2341,7 +2442,20 @@ void ElemWiseSecretSharedVectorMult(int32_t size, intType *inArr,
 #endif
 }
 
+void ElemWiseSecretSharedVectorMult(sci::Session &s, int32_t size,
+                                    intType *inArr, intType *multArrVec,
+                                    intType *outputArr) {
+  (void)s;
+  ElemWiseSecretSharedVectorMult(size, inArr, multArrVec, outputArr);
+}
+
 void Floor(int32_t s1, intType *inArr, intType *outArr, int32_t sf) {
   // Not being used in any of our networks right now
   assert(false);
+}
+
+void Floor(sci::Session &s, int32_t s1, intType *inArr, intType *outArr,
+           int32_t sf) {
+  (void)s;
+  Floor(s1, inArr, outArr, sf);
 }
