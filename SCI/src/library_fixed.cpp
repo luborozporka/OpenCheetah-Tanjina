@@ -105,20 +105,23 @@ void finalize(sci::Session &s) {
   finalize();
 }
 
-void reconstruct(int64_t *A, int64_t *B, int32_t I, int32_t J, int bwA) {
-  reconstruct(I * J, (uint64_t *)A, (uint64_t *)B, bwA);
+void reconstruct(sci::Session &s, int64_t *A, int64_t *B, int32_t I, int32_t J,
+                 int bwA) {
+  reconstruct(s, I * J, (uint64_t *)A, (uint64_t *)B, bwA);
   for (int i = 0; i < I * J; i++) {
     B[i] = signed_val((uint64_t)B[i], bwA);
   }
 }
 
-void reconstruct(sci::Session &s, int64_t *A, int64_t *B, int32_t I, int32_t J,
-                 int bwA) {
-  (void)s;
-  reconstruct(A, B, I, J, bwA);
+void reconstruct(int64_t *A, int64_t *B, int32_t I, int32_t J, int bwA) {
+  reconstruct(*sci::CurrentSession(), A, B, I, J, bwA);
 }
 
-void reconstruct(int dim, uint64_t *x, uint64_t *y, int bw_x) {
+void reconstruct(sci::Session &s, int dim, uint64_t *x, uint64_t *y, int bw_x) {
+  // Alias session-owned resources; names shadow the file-scope globals in globals.h
+  auto *io = s.io();
+  const int party = s.party_value();
+
   uint64_t mask = (bw_x == 64 ? -1 : ((1ULL << bw_x) - 1));
   if (party == sci::ALICE) {
     io->send_data(x, dim * sizeof(uint64_t));
@@ -133,9 +136,8 @@ void reconstruct(int dim, uint64_t *x, uint64_t *y, int bw_x) {
   }
 }
 
-void reconstruct(sci::Session &s, int dim, uint64_t *x, uint64_t *y, int bw_x) {
-  (void)s;
-  reconstruct(dim, x, y, bw_x);
+void reconstruct(int dim, uint64_t *x, uint64_t *y, int bw_x) {
+  reconstruct(*sci::CurrentSession(), dim, x, y, bw_x);
 }
 
 void typecast_to_uint64(int64_t *A, uint64_t *A64, int32_t I, int32_t J,
@@ -2643,9 +2645,13 @@ void Div(int32_t I, int32_t J, int32_t shrA, int32_t shrB, int32_t shrC,
   return;
 }
 
-void output_vector(int64_t *x, int32_t I, int32_t J, int32_t bwX) {
+void output_vector(sci::Session &s, int64_t *x, int32_t I, int32_t J,
+                   int32_t bwX) {
+  // Alias session-captured scalars so the body stays byte-identical
+  const int party = s.party_value();
+
   int64_t *y = new int64_t[I * J];
-  reconstruct(x, y, I, J, bwX);
+  reconstruct(s, x, y, I, J, bwX);
   if (party == 2) {
     for (int i = 0; i < I * J; i++) {
       std::cout << y[i] << " ";
@@ -2653,6 +2659,10 @@ void output_vector(int64_t *x, int32_t I, int32_t J, int32_t bwX) {
     std::cout << std::endl;
   }
   delete[] y;
+}
+
+void output_vector(int64_t *x, int32_t I, int32_t J, int32_t bwX) {
+  output_vector(*sci::CurrentSession(), x, I, J, bwX);
 }
 
 void AdjustScaleShr(sci::Session &s, uint64_t *A, uint64_t *B, int32_t I,
@@ -2829,12 +2839,6 @@ void MBConv(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t Cin,
          shl7, shl8, shl9, bwA, bwF1, bwB1W, bwB1B, bwF2, bwB2W, bwB2B, bwF3,
          bwB3W, bwB3B, bwC, bwX, bwT, bwU, bwUB1W, bwUB2W, bwUB3W, A, F1, BN1W,
          BN1B, F2, BN2W, BN2B, F3, BN3W, BN3B, C, X, T, U);
-}
-
-void output_vector(sci::Session &s, int64_t *x, int32_t I, int32_t J,
-                   int32_t bwX) {
-  (void)s;
-  output_vector(x, I, J, bwX);
 }
 
 void MatAdd(sci::Session &s, int64_t I, int64_t J, int64_t shrA, int64_t shrB,
