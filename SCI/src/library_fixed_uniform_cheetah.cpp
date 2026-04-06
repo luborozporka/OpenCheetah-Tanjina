@@ -66,8 +66,13 @@ extern void ElemWiseActModelVectorMult_pt(uint64_t s1, uint64_1D &arr1,
                                           uint64_1D &arr2, uint64_1D &outArr);
 #endif
 
-void MatMul2D(int32_t d0, int32_t d1, int32_t d2, const intType *mat_A,
-              const intType *mat_B, intType *mat_C, bool is_A_weight_matrix) {
+void MatMul2D(sci::Session &s, int32_t d0, int32_t d1, int32_t d2,
+              const intType *mat_A, const intType *mat_B, intType *mat_C,
+              bool is_A_weight_matrix) {
+  // Alias session-owned resources
+  auto *cheetah_linear = s.cheetah_linear();
+  const int party = s.party_value();
+
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -264,20 +269,23 @@ void MatMul2D(int32_t d0, int32_t d1, int32_t d2, const intType *mat_A,
 #endif
 }
 
-void MatMul2D(sci::Session &s, int32_t d0, int32_t d1, int32_t d2,
-              const intType *mat_A, const intType *mat_B, intType *mat_C,
-              bool is_A_weight_matrix) {
-  (void)s;
-  MatMul2D(d0, d1, d2, mat_A, mat_B, mat_C, is_A_weight_matrix);
+void MatMul2D(int32_t d0, int32_t d1, int32_t d2, const intType *mat_A,
+              const intType *mat_B, intType *mat_C, bool is_A_weight_matrix) {
+  MatMul2D(*sci::CurrentSession(), d0, d1, d2, mat_A, mat_B, mat_C,
+           is_A_weight_matrix);
 }
 
-void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
-                   signedIntType CI, signedIntType FH, signedIntType FW,
-                   signedIntType CO, signedIntType zPadHLeft,
+void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
+                   signedIntType W, signedIntType CI, signedIntType FH,
+                   signedIntType FW, signedIntType CO, signedIntType zPadHLeft,
                    signedIntType zPadHRight, signedIntType zPadWLeft,
                    signedIntType zPadWRight, signedIntType strideH,
                    signedIntType strideW, intType *inputArr, intType *filterArr,
                    intType *outArr) {
+  // Alias session-owned resources
+  auto *cheetah_linear = s.cheetah_linear();
+  const int party = s.party_value();
+
 #ifdef LOG_LAYERWISE
   sleep(1); // Added by Tanjina to adjust the first power reading timestamp
   INIT_ALL_IO_DATA_SENT;
@@ -566,21 +574,24 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
 
 }
 
-void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
-                   signedIntType W, signedIntType CI, signedIntType FH,
-                   signedIntType FW, signedIntType CO, signedIntType zPadHLeft,
+void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
+                   signedIntType CI, signedIntType FH, signedIntType FW,
+                   signedIntType CO, signedIntType zPadHLeft,
                    signedIntType zPadHRight, signedIntType zPadWLeft,
                    signedIntType zPadWRight, signedIntType strideH,
                    signedIntType strideW, intType *inputArr, intType *filterArr,
                    intType *outArr) {
-  (void)s;
-  Conv2DWrapper(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft,
-                zPadWRight, strideH, strideW, inputArr, filterArr, outArr);
+  Conv2DWrapper(*sci::CurrentSession(), N, H, W, CI, FH, FW, CO, zPadHLeft,
+                zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, inputArr,
+                filterArr, outArr);
 }
 
-void BatchNorm(int32_t B, int32_t H, int32_t W, int32_t C,
+void BatchNorm(sci::Session &s, int32_t B, int32_t H, int32_t W, int32_t C,
                const intType *inputArr, const intType *scales,
                const intType *bias, intType *outArr) {
+  // Alias session-owned resources
+  auto *cheetah_linear = s.cheetah_linear();
+
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -703,15 +714,18 @@ void BatchNorm(int32_t B, int32_t H, int32_t W, int32_t C,
 
 }
 
-void BatchNorm(sci::Session &s, int32_t B, int32_t H, int32_t W, int32_t C,
+void BatchNorm(int32_t B, int32_t H, int32_t W, int32_t C,
                const intType *inputArr, const intType *scales,
                const intType *bias, intType *outArr) {
-  (void)s;
-  BatchNorm(B, H, W, C, inputArr, scales, bias, outArr);
+  BatchNorm(*sci::CurrentSession(), B, H, W, C, inputArr, scales, bias, outArr);
 }
 
-void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
+void ElemWiseActModelVectorMult(sci::Session &s, int32_t size, intType *inArr,
                                 intType *multArrVec, intType *outputArr) {
+  // Alias session-owned resources
+  auto *cheetah_linear = s.cheetah_linear();
+  const int party = s.party_value();
+
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -860,9 +874,9 @@ void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
 
 }
 
-void ElemWiseActModelVectorMult(sci::Session &s, int32_t size, intType *inArr,
+void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
                                 intType *multArrVec, intType *outputArr) {
-  (void)s;
-  ElemWiseActModelVectorMult(size, inArr, multArrVec, outputArr);
+  ElemWiseActModelVectorMult(*sci::CurrentSession(), size, inArr, multArrVec,
+                             outputArr);
 }
 #endif
