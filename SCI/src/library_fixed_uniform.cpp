@@ -827,6 +827,14 @@ void ElemWiseActModelVectorMult(sci::Session &s, int32_t size, intType *inArr,
 #endif
 
 void ArgMax(int32_t s1, int32_t s2, intType *inArr, intType *outArr) {
+  ArgMax(*sci::CurrentSession(), s1, s2, inArr, outArr);
+}
+
+void ArgMax(sci::Session &s, int32_t s1, int32_t s2, intType *inArr,
+            intType *outArr) {
+  // Alias session-owned resources
+  const int party = s.party_value();
+  auto *argmax = s.argmax();
 
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
@@ -947,13 +955,17 @@ void ArgMax(int32_t s1, int32_t s2, intType *inArr, intType *outArr) {
 #endif
 }
 
-void ArgMax(sci::Session &s, int32_t s1, int32_t s2, intType *inArr,
-            intType *outArr) {
-  (void)s;
-  ArgMax(s1, s2, inArr, outArr);
+void Relu(int32_t size, intType *inArr, intType *outArr, int sf, bool doTruncation) {
+  Relu(*sci::CurrentSession(), size, inArr, outArr, sf, doTruncation);
 }
 
-void Relu(int32_t size, intType *inArr, intType *outArr, int sf, bool doTruncation) {
+void Relu(sci::Session &s, int32_t size, intType *inArr, intType *outArr,
+          int sf, bool doTruncation) {
+  // Alias session-owned resources
+  const int party = s.party_value();
+  const int bitlength = s.bitlength_value();
+  const int num_threads = s.num_threads_value();
+  auto *relu = s.relu();
 
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
@@ -1184,17 +1196,27 @@ void Relu(int32_t size, intType *inArr, intType *outArr, int sf, bool doTruncati
   delete[] msbShare;
 }
 
-void Relu(sci::Session &s, int32_t size, intType *inArr, intType *outArr,
-          int sf, bool doTruncation) {
-  (void)s;
-  Relu(size, inArr, outArr, sf, doTruncation);
-}
-
 void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
              int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight,
              int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
              int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
              int32_t C1, intType *inArr, intType *outArr) {
+  MaxPool(*sci::CurrentSession(), N, H, W, C, ksizeH, ksizeW, zPadHLeft,
+          zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, N1, imgH, imgW,
+          C1, inArr, outArr);
+}
+
+void MaxPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
+             int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft,
+             int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight,
+             int32_t strideH, int32_t strideW, int32_t N1, int32_t imgH,
+             int32_t imgW, int32_t C1, intType *inArr, intType *outArr) {
+  // Alias session-owned resources
+  const int party = s.party_value();
+  const int bitlength = s.bitlength_value();
+  const int num_threads = s.num_threads_value();
+  auto *maxpool = s.maxpool();
+
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -1457,21 +1479,24 @@ void MaxPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
 
 }
 
-void MaxPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
-             int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft,
-             int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight,
-             int32_t strideH, int32_t strideW, int32_t N1, int32_t imgH,
-             int32_t imgW, int32_t C1, intType *inArr, intType *outArr) {
-  (void)s;
-  MaxPool(N, H, W, C, ksizeH, ksizeW, zPadHLeft, zPadHRight, zPadWLeft,
-          zPadWRight, strideH, strideW, N1, imgH, imgW, C1, inArr, outArr);
-}
-
 void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
              int32_t ksizeW, int32_t zPadHLeft, int32_t zPadHRight,
              int32_t zPadWLeft, int32_t zPadWRight, int32_t strideH,
              int32_t strideW, int32_t N1, int32_t imgH, int32_t imgW,
              int32_t C1, intType *inArr, intType *outArr) {
+  AvgPool(*sci::CurrentSession(), N, H, W, C, ksizeH, ksizeW, zPadHLeft,
+          zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, N1, imgH, imgW,
+          C1, inArr, outArr);
+}
+
+void AvgPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
+             int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft,
+             int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight,
+             int32_t strideH, int32_t strideW, int32_t N1, int32_t imgH,
+             int32_t imgW, int32_t C1, intType *inArr, intType *outArr) {
+  const int party = s.party_value();
+  const int bitlength = s.bitlength_value();
+
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -1697,16 +1722,6 @@ void AvgPool(int32_t N, int32_t H, int32_t W, int32_t C, int32_t ksizeH,
   }       
 #endif
 
-}
-
-void AvgPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
-             int32_t ksizeH, int32_t ksizeW, int32_t zPadHLeft,
-             int32_t zPadHRight, int32_t zPadWLeft, int32_t zPadWRight,
-             int32_t strideH, int32_t strideW, int32_t N1, int32_t imgH,
-             int32_t imgW, int32_t C1, intType *inArr, intType *outArr) {
-  (void)s;
-  AvgPool(N, H, W, C, ksizeH, ksizeW, zPadHLeft, zPadHRight, zPadWLeft,
-          zPadWRight, strideH, strideW, N1, imgH, imgW, C1, inArr, outArr);
 }
 
 void ScaleDown(int32_t size, intType *inArr, int32_t sf) {
