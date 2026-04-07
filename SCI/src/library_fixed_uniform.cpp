@@ -46,6 +46,23 @@ uint64_t moduloMidPt = prime_mod / 2;
 #if !USE_CHEETAH
 void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType *A,
               const intType *B, intType *C, bool modelIsA) {
+  MatMul2D(*sci::CurrentSession(), s1, s2, s3, A, B, C, modelIsA);
+}
+
+void MatMul2D(sci::Session &s, int32_t s1, int32_t s2, int32_t s3,
+              const intType *A, const intType *B, intType *C, bool modelIsA) {
+  // Alias session-owned resources
+  const int party = s.party_value();
+#if defined(SCI_OT)
+  const int bitlength = s.bitlength_value();
+  const int num_threads = s.num_threads_value();
+  auto *multUniform = s.multUniform();
+  auto *iknpOT = s.iknpOT();
+  auto *iknpOTRoleReversed = s.iknpOTRoleReversed();
+#elif defined(SCI_HE)
+  auto *he_fc = s.he_fc();
+#endif
+
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -263,12 +280,6 @@ void MatMul2D(int32_t s1, int32_t s2, int32_t s3, const intType *A,
   }
 #endif
 }
-
-void MatMul2D(sci::Session &s, int32_t s1, int32_t s2, int32_t s3,
-              const intType *A, const intType *B, intType *C, bool modelIsA) {
-  (void)s;
-  MatMul2D(s1, s2, s3, A, B, C, modelIsA);
-}
 #endif
 
 static void Conv2D(int32_t N, int32_t H, int32_t W, int32_t CI, int32_t FH,
@@ -316,7 +327,25 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
                    signedIntType zPadHRight, signedIntType zPadWLeft,
                    signedIntType zPadWRight, signedIntType strideH,
                    signedIntType strideW, intType *inputArr, intType *filterArr,
-                   intType *outArr) {                
+                   intType *outArr) {
+  Conv2DWrapper(*sci::CurrentSession(), N, H, W, CI, FH, FW, CO, zPadHLeft,
+                zPadHRight, zPadWLeft, zPadWRight, strideH, strideW, inputArr,
+                filterArr, outArr);
+}
+
+void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
+                   signedIntType W, signedIntType CI, signedIntType FH,
+                   signedIntType FW, signedIntType CO, signedIntType zPadHLeft,
+                   signedIntType zPadHRight, signedIntType zPadWLeft,
+                   signedIntType zPadWRight, signedIntType strideH,
+                   signedIntType strideW, intType *inputArr, intType *filterArr,
+                   intType *outArr) {
+  // Alias session-owned resources
+  const int party = s.party_value();
+#ifdef SCI_HE
+  auto *he_conv = s.he_conv();
+#endif
+
 #ifdef LOG_LAYERWISE
   sleep(1); // Added by Tanjina to adjust the first power reading timestamp
   INIT_ALL_IO_DATA_SENT;
@@ -570,19 +599,6 @@ void Conv2DWrapper(signedIntType N, signedIntType H, signedIntType W,
 #endif
 
 }
-
-void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
-                   signedIntType W, signedIntType CI, signedIntType FH,
-                   signedIntType FW, signedIntType CO, signedIntType zPadHLeft,
-                   signedIntType zPadHRight, signedIntType zPadWLeft,
-                   signedIntType zPadWRight, signedIntType strideH,
-                   signedIntType strideW, intType *inputArr, intType *filterArr,
-                   intType *outArr) {
-  (void)s;
-  Conv2DWrapper(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft,
-                zPadWRight, strideH, strideW, inputArr, filterArr, outArr);
-}
-
 #endif
 
 #ifdef SCI_OT
@@ -600,6 +616,19 @@ void Conv2DGroupWrapper(signedIntType N, signedIntType H, signedIntType W,
                         signedIntType zPadWRight, signedIntType strideH,
                         signedIntType strideW, signedIntType G,
                         intType *inputArr, intType *filterArr,
+                        intType *outArr) {
+  Conv2DGroupWrapper(*sci::CurrentSession(), N, H, W, CI, FH, FW, CO,
+                     zPadHLeft, zPadHRight, zPadWLeft, zPadWRight, strideH,
+                     strideW, G, inputArr, filterArr, outArr);
+}
+
+void Conv2DGroupWrapper(sci::Session &s, signedIntType N, signedIntType H,
+                        signedIntType W, signedIntType CI, signedIntType FH,
+                        signedIntType FW, signedIntType CO,
+                        signedIntType zPadHLeft, signedIntType zPadHRight,
+                        signedIntType zPadWLeft, signedIntType zPadWRight,
+                        signedIntType strideH, signedIntType strideW,
+                        signedIntType G, intType *inputArr, intType *filterArr,
                         intType *outArr) {
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
@@ -621,7 +650,7 @@ void Conv2DGroupWrapper(signedIntType N, signedIntType H, signedIntType W,
 
 #ifdef SCI_HE
   if (G == 1)
-    Conv2DWrapper(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft,
+    Conv2DWrapper(s, N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft,
                   zPadWRight, strideH, strideW, inputArr, filterArr, outArr);
   else
     assert(false && "Grouped conv not implemented in HE");
@@ -638,23 +667,24 @@ void Conv2DGroupWrapper(signedIntType N, signedIntType H, signedIntType W,
 #endif
 }
 
-void Conv2DGroupWrapper(sci::Session &s, signedIntType N, signedIntType H,
-                        signedIntType W, signedIntType CI, signedIntType FH,
-                        signedIntType FW, signedIntType CO,
-                        signedIntType zPadHLeft, signedIntType zPadHRight,
-                        signedIntType zPadWLeft, signedIntType zPadWRight,
-                        signedIntType strideH, signedIntType strideW,
-                        signedIntType G, intType *inputArr, intType *filterArr,
-                        intType *outArr) {
-  (void)s;
-  Conv2DGroupWrapper(N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft,
-                     zPadWRight, strideH, strideW, G, inputArr, filterArr,
-                     outArr);
-}
-
 #if !USE_CHEETAH
 void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
                                 intType *multArrVec, intType *outputArr) {
+  ElemWiseActModelVectorMult(*sci::CurrentSession(), size, inArr, multArrVec,
+                             outputArr);
+}
+
+void ElemWiseActModelVectorMult(sci::Session &s, int32_t size, intType *inArr,
+                                intType *multArrVec, intType *outputArr) {
+  // Alias session-owned resources
+  const int party = s.party_value();
+#ifdef SCI_OT
+  const int num_threads = s.num_threads_value();
+#endif
+#ifdef SCI_HE
+  auto *he_prod = s.he_prod();
+#endif
+
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -793,12 +823,6 @@ void ElemWiseActModelVectorMult(int32_t size, intType *inArr,
     delete[] VoutputArr;
   }
 #endif
-}
-
-void ElemWiseActModelVectorMult(sci::Session &s, int32_t size, intType *inArr,
-                                intType *multArrVec, intType *outputArr) {
-  (void)s;
-  ElemWiseActModelVectorMult(size, inArr, multArrVec, outputArr);
 }
 #endif
 
