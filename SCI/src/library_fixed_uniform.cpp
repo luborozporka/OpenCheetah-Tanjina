@@ -1725,6 +1725,14 @@ void AvgPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
 }
 
 void ScaleDown(int32_t size, intType *inArr, int32_t sf) {
+  ScaleDown(*sci::CurrentSession(), size, inArr, sf);
+}
+
+void ScaleDown(sci::Session &s, int32_t size, intType *inArr, int32_t sf) {
+  // Alias session-owned resources
+  const int party = s.party_value();
+  const int bitlength = s.bitlength_value();
+
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -1816,12 +1824,12 @@ void ScaleDown(int32_t size, intType *inArr, int32_t sf) {
   if (size != eightDivElemts) delete[] tempInp;
 }
 
-void ScaleDown(sci::Session &s, int32_t size, intType *inArr, int32_t sf) {
-  (void)s;
-  ScaleDown(size, inArr, sf);
+void ScaleUp(int32_t size, intType *arr, int32_t sf) {
+  ScaleUp(*sci::CurrentSession(), size, arr, sf);
 }
 
-void ScaleUp(int32_t size, intType *arr, int32_t sf) {
+void ScaleUp(sci::Session &s, int32_t size, intType *arr, int32_t sf) {
+  (void)s;
   for (int i = 0; i < size; i++) {
 #ifdef SCI_OT
     arr[i] = (arr[i] << sf);
@@ -1829,11 +1837,6 @@ void ScaleUp(int32_t size, intType *arr, int32_t sf) {
     arr[i] = sci::neg_mod(arr[i] << sf, (int64_t)prime_mod);
 #endif
   }
-}
-
-void ScaleUp(sci::Session &s, int32_t size, intType *arr, int32_t sf) {
-  (void)s;
-  ScaleUp(size, arr, sf);
 }
 
 // Process-singleton session populated by StartComputation and torn down by EndComputation
@@ -2315,6 +2318,11 @@ void EndComputation() {
 }
 
 intType SecretAdd(intType x, intType y) {
+  return SecretAdd(*sci::CurrentSession(), x, y);
+}
+
+intType SecretAdd(sci::Session &s, intType x, intType y) {
+  (void)s;
 #ifdef SCI_OT
   return (x + y);
 #else
@@ -2322,12 +2330,12 @@ intType SecretAdd(intType x, intType y) {
 #endif
 }
 
-intType SecretAdd(sci::Session &s, intType x, intType y) {
-  (void)s;
-  return SecretAdd(x, y);
+intType SecretSub(intType x, intType y) {
+  return SecretSub(*sci::CurrentSession(), x, y);
 }
 
-intType SecretSub(intType x, intType y) {
+intType SecretSub(sci::Session &s, intType x, intType y) {
+  (void)s;
 #ifdef SCI_OT
   return (x - y);
 #else
@@ -2335,23 +2343,24 @@ intType SecretSub(intType x, intType y) {
 #endif
 }
 
-intType SecretSub(sci::Session &s, intType x, intType y) {
-  (void)s;
-  return SecretSub(x, y);
-}
-
 intType SecretMult(intType x, intType y) {
-  // assert(false);
-  return x * y;
+  return SecretMult(*sci::CurrentSession(), x, y);
 }
 
 intType SecretMult(sci::Session &s, intType x, intType y) {
   (void)s;
-  return SecretMult(x, y);
+  // assert(false);
+  return x * y;
 }
 
 void ElemWiseVectorPublicDiv(int32_t s1, intType *arr1, int32_t divisor,
                              intType *outArr) {
+  ElemWiseVectorPublicDiv(*sci::CurrentSession(), s1, arr1, divisor, outArr);
+}
+
+void ElemWiseVectorPublicDiv(sci::Session &s, int32_t s1, intType *arr1,
+                             int32_t divisor, intType *outArr) {
+  (void)s;
   intType *inp;
   intType *out;
   const int alignment = 8;
@@ -2384,14 +2393,21 @@ void ElemWiseVectorPublicDiv(int32_t s1, intType *arr1, int32_t divisor,
   return;
 }
 
-void ElemWiseVectorPublicDiv(sci::Session &s, int32_t s1, intType *arr1,
-                             int32_t divisor, intType *outArr) {
-  (void)s;
-  ElemWiseVectorPublicDiv(s1, arr1, divisor, outArr);
-}
-
 void ElemWiseSecretSharedVectorMult(int32_t size, intType *inArr,
                                     intType *multArrVec, intType *outputArr) {
+  ElemWiseSecretSharedVectorMult(*sci::CurrentSession(), size, inArr,
+                                 multArrVec, outputArr);
+}
+
+void ElemWiseSecretSharedVectorMult(sci::Session &s, int32_t size,
+                                    intType *inArr, intType *multArrVec,
+                                    intType *outputArr) {
+  // Alias session-owned resources
+  const int party = s.party_value();
+#ifdef SCI_OT
+  const int num_threads = s.num_threads_value();
+#endif
+
 #ifdef LOG_LAYERWISE
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
@@ -2481,20 +2497,12 @@ void ElemWiseSecretSharedVectorMult(int32_t size, intType *inArr,
 #endif
 }
 
-void ElemWiseSecretSharedVectorMult(sci::Session &s, int32_t size,
-                                    intType *inArr, intType *multArrVec,
-                                    intType *outputArr) {
-  (void)s;
-  ElemWiseSecretSharedVectorMult(size, inArr, multArrVec, outputArr);
-}
-
 void Floor(int32_t s1, intType *inArr, intType *outArr, int32_t sf) {
-  // Not being used in any of our networks right now
-  assert(false);
+  Floor(*sci::CurrentSession(), s1, inArr, outArr, sf);
 }
 
 void Floor(sci::Session &s, int32_t s1, intType *inArr, intType *outArr,
            int32_t sf) {
   (void)s;
-  Floor(s1, inArr, outArr, sf);
+  assert(false);
 }
