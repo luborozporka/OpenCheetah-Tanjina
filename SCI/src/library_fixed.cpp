@@ -2665,6 +2665,9 @@ void output_vector(int64_t *x, int32_t I, int32_t J, int32_t bwX) {
   output_vector(*sci::CurrentSession(), x, I, J, bwX);
 }
 
+// Athos wrappers (AdjustScaleShr, MatAdd, Convolution, Sigmoid, ...):
+// Body migration to per-session state is skipped because sqnet and resnet50 (thesis evaluation scope) should not invoke any of these wrappers
+
 void AdjustScaleShr(sci::Session &s, uint64_t *A, uint64_t *B, int32_t I,
                     int32_t J, int32_t bwA, int32_t scale) {
   (void)s;
