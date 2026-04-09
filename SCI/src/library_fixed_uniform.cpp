@@ -214,11 +214,13 @@ void MatMul2D(sci::Session &s, int32_t s1, int32_t s2, int32_t s3,
 #ifdef LOG_LAYERWISE
   auto temp = TIMER_TILL_NOW;
   MatMulTimeInMilliSec += temp;
+  s.matmul_time_ms += temp;
   std::cout << "Time in sec for current matmul = " << (temp / 1000.0)
             << std::endl;
   uint64_t curComm;
   FIND_ALL_IO_TILL_NOW(curComm);
   MatMulCommSent += curComm;
+  s.matmul_comm_sent += curComm;
 #endif
 
 #ifdef VERIFY_LAYERWISE
@@ -357,6 +359,7 @@ void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
   std::cout << "Current time of start for current conv = " << cur_start
             << std::endl;
   ConvStartTime = cur_start; // Added by Tanjina to calculate the duration/execution time
+  s.conv_start_time = cur_start;
 #endif
 
 /** 
@@ -366,6 +369,7 @@ void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
 #ifdef LOG_LAYERWISE
   // conv layer counter
   Conv_layer_count++;
+  s.conv_layer_count++;
 
   std::cout << "STARTING ENERGY MEASUREMENT" << std::endl;
   // Pass the the Power usage file path to the Energy measurement library 
@@ -447,11 +451,13 @@ void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
 #ifdef LOG_LAYERWISE
   auto temp = TIMER_TILL_NOW;
   ConvTimeInMilliSec += temp;
+  s.conv_time_ms += temp;
   std::cout << "Time in sec for current conv = " << (temp / 1000.0)
             << std::endl;
   uint64_t curComm;
   FIND_ALL_IO_TILL_NOW(curComm);
   ConvCommSent += curComm;
+  s.conv_comm_sent += curComm;
 #endif
 
 #ifdef VERIFY_LAYERWISE
@@ -549,6 +555,7 @@ void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
   std::cout << "Current time of end for current conv = " << cur_end
             << std::endl;
   ConvEndTime = cur_end; // Added by Tanjina to calculate the duration/execution time
+  s.conv_end_time = cur_end;
   // sleep(1); // Added by Tanjina 
 # endif
   
@@ -560,6 +567,7 @@ void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
   std::vector<std::pair<uint64_t, int64_t>> power_readings = measurement.stop();
   // ConvExecutionTime = (ConvEndTime - ConvStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
   ConvExecutionTime = (ConvEndTime - ConvStartTime); // Note-Tanjina: Keep in milliseconds, need to do the conversion later
+  s.conv_execution_time = ConvExecutionTime;
  
   for(int i = 0; i < power_readings.size(); ++i){
     uint64_t avgPower = power_readings[i].first; // Note-Tanjina: Keep in microwatts, need to do the conversion later
@@ -567,6 +575,7 @@ void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
     // double avgPowerUsage = avgPower / 1000000.0;
 
     ConvTotalPowerConsumption += avgPower;
+    s.conv_total_power_uw += avgPower;
     std::cout << "Tanjina-Power usage values from the power_reading for HomConv #" << Conv_layer_count << " : " << avgPower << " microwatts " << "Timestamp of the current power reading: " << timestampPower << " Conv layer start Timestamp: " << ConvStartTime << " Conv layer end Timestamp: " << ConvEndTime <<  " Execution time: " << ConvExecutionTime << " milliseconds" << std::endl;
     // std::cout <<  "Tanjina-NN architecture info: " << "Conv_N = " << N << " Conv_H = " << H << " Conv_W = " << W << " Conv_CI = " << CI << " Conv_FH = " << FH << " Conv_FW = " << FW << " Conv_CO = " << CO << " Conv_ zPadHLeft = " << zPadHLeft << " Conv_zPadHRight = " << zPadHRight << " Conv_zPadWLeft = " << zPadWLeft  << " Conv_zPadWRight = " << zPadWRight << " Conv_strideH = " << strideH << " Conv_strideW = " << strideW << std::endl;
     
@@ -659,11 +668,13 @@ void Conv2DGroupWrapper(sci::Session &s, signedIntType N, signedIntType H,
 #ifdef LOG_LAYERWISE
   auto temp = TIMER_TILL_NOW;
   ConvTimeInMilliSec += temp;
+  s.conv_time_ms += temp;
   std::cout << "Time in sec for current conv = " << (temp / 1000.0)
             << std::endl;
   uint64_t curComm;
   FIND_ALL_IO_TILL_NOW(curComm);
   ConvCommSent += curComm;
+  s.conv_comm_sent += curComm;
 #endif
 }
 
@@ -768,9 +779,11 @@ void ElemWiseActModelVectorMult(sci::Session &s, int32_t size, intType *inArr,
 #ifdef LOG_LAYERWISE
   auto temp = TIMER_TILL_NOW;
   BatchNormInMilliSec += temp;
+  s.batch_norm_time_ms += temp;
   uint64_t curComm;
   FIND_ALL_IO_TILL_NOW(curComm);
   BatchNormCommSent += curComm;
+  s.batch_norm_comm_sent += curComm;
   std::cout << "Time in sec for current BN = [" << (temp / 1000.0)
             << "] sent [" << (curComm / 1024. / 1024.) << "] MB"
             << std::endl;
@@ -2448,9 +2461,11 @@ void ElemWiseSecretSharedVectorMult(sci::Session &s, int32_t size,
 #ifdef LOG_LAYERWISE
   auto temp = TIMER_TILL_NOW;
   BatchNormInMilliSec += temp;
+  s.batch_norm_time_ms += temp;
   uint64_t curComm;
   FIND_ALL_IO_TILL_NOW(curComm);
   BatchNormCommSent += curComm;
+  s.batch_norm_comm_sent += curComm;
 #endif
 
 #ifdef VERIFY_LAYERWISE
