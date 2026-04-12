@@ -1810,9 +1810,11 @@ void ScaleDown(sci::Session &s, int32_t size, intType *inArr, int32_t sf) {
 #ifdef LOG_LAYERWISE
   auto temp = TIMER_TILL_NOW;
   TruncationTimeInMilliSec += temp;
+  s.truncation_time_ms += temp;
   uint64_t curComm;
   FIND_ALL_IO_TILL_NOW(curComm);
   TruncationCommSent += curComm;
+  s.truncation_comm_sent += curComm;
 #endif
 
 #ifdef VERIFY_LAYERWISE
