@@ -18,9 +18,13 @@ find_package(Eigen3 3.3.3 REQUIRED)
 find_package(SEAL REQUIRED)
 find_package(emp-tool REQUIRED)
 find_package(emp-ot REQUIRED)
+# Boost.Asio: Phase 1 multi-client server
+# Set BOOST_ROOT if Boost is installed outside the default system prefix
+find_package(Boost 1.66 REQUIRED COMPONENTS system)
 include_directories(${EIGEN3_INCLUDE_DIR}
                     ${EMP-OT_INCLUDE_DIRS} 
-                    ${EMP-TOOL_INCLUDE_DIRS})
+                    ${EMP-TOOL_INCLUDE_DIRS}
+                    ${Boost_INCLUDE_DIRS})
 
 ## cheetah-core
 add_library(gemini SHARED)
