@@ -2089,6 +2089,78 @@ void EndComputation() {
   std::cout << "------------------------------------------------------\n";
 
 #ifdef LOG_LAYERWISE
+  // Verify every counter mirrored matches its global twin
+  // Read-only; globals remain the source of truth for the stdout/CSV
+  {
+    sci::Session *s_dbg = sci::CurrentSession();
+    assert(s_dbg != nullptr && "EndComputation: no current session");
+    auto check = [](const char *name, uint64_t g, uint64_t sv) {
+      if (g != sv) {
+        std::cerr << "[session-mirror mismatch] " << name
+                  << " global=" << g << " session=" << sv << std::endl;
+      }
+      assert(g == sv && "session counter diverged from global");
+    };
+    auto check_d = [](const char *name, double g, double sv) {
+      if (g != sv) {
+        std::cerr << "[session-mirror mismatch] " << name
+                  << " global=" << g << " session=" << sv << std::endl;
+      }
+      assert(g == sv && "session counter diverged from global");
+    };
+    check("ConvTimeInMilliSec",        ConvTimeInMilliSec,        s_dbg->conv_time_ms);
+    check("ConvCommSent",              ConvCommSent,              s_dbg->conv_comm_sent);
+    check("Conv_layer_count",          (uint64_t)Conv_layer_count,(uint64_t)s_dbg->conv_layer_count);
+    check("ConvTotalPowerConsumption", ConvTotalPowerConsumption, s_dbg->conv_total_power_uw);
+    check("ConvStartTime",             ConvStartTime,             s_dbg->conv_start_time);
+    check("ConvEndTime",               ConvEndTime,               s_dbg->conv_end_time);
+    check("ConvExecutionTime",         ConvExecutionTime,         s_dbg->conv_execution_time);
+    check("MatMulTimeInMilliSec",        MatMulTimeInMilliSec,        s_dbg->matmul_time_ms);
+    check("MatMulCommSent",              MatMulCommSent,              s_dbg->matmul_comm_sent);
+    check("MatMul_layer_count",          (uint64_t)MatMul_layer_count,(uint64_t)s_dbg->matmul_layer_count);
+    check("MatMulTotalPowerConsumption", MatMulTotalPowerConsumption, s_dbg->matmul_total_power_uw);
+    check("MatMulStartTime",             MatMulStartTime,             s_dbg->matmul_start_time);
+    check("MatMulEndTime",               MatMulEndTime,               s_dbg->matmul_end_time);
+    check_d("MatMulExecutionTime",       MatMulExecutionTime,         s_dbg->matmul_execution_time);
+    check("BatchNormInMilliSec",           BatchNormInMilliSec,            s_dbg->batch_norm_time_ms);
+    check("BatchNormCommSent",             BatchNormCommSent,              s_dbg->batch_norm_comm_sent);
+    check("BatchNorm_layer_count",         (uint64_t)BatchNorm_layer_count,(uint64_t)s_dbg->batch_norm_layer_count);
+    check("BatchNormTotalPowerConsumption",BatchNormTotalPowerConsumption, s_dbg->batch_norm_total_power_uw);
+    check("BatchNormStartTime",            BatchNormStartTime,             s_dbg->batch_norm_start_time);
+    check("BatchNormEndTime",              BatchNormEndTime,               s_dbg->batch_norm_end_time);
+    check_d("BatchNormExecutionTime",      BatchNormExecutionTime,         s_dbg->batch_norm_execution_time);
+    check("ReluTimeInMilliSec",        ReluTimeInMilliSec,        s_dbg->relu_time_ms);
+    check("ReluCommSent",              ReluCommSent,              s_dbg->relu_comm_sent);
+    check("Relu_layer_count",          (uint64_t)Relu_layer_count,(uint64_t)s_dbg->relu_layer_count);
+    check("ReluTotalPowerConsumption", ReluTotalPowerConsumption, s_dbg->relu_total_power_uw);
+    check("ReluStartTime",             ReluStartTime,             s_dbg->relu_start_time);
+    check("ReluEndTime",               ReluEndTime,               s_dbg->relu_end_time);
+    check_d("ReluExecutionTime",       ReluExecutionTime,         s_dbg->relu_execution_time);
+    check("MaxpoolTimeInMilliSec",       MaxpoolTimeInMilliSec,         s_dbg->maxpool_time_ms);
+    check("MaxpoolCommSent",             MaxpoolCommSent,               s_dbg->maxpool_comm_sent);
+    check("MaxPool_layer_count",         (uint64_t)MaxPool_layer_count, (uint64_t)s_dbg->maxpool_layer_count);
+    check("MaxPoolTotalPowerConsumption",MaxPoolTotalPowerConsumption,  s_dbg->maxpool_total_power_uw);
+    check("MaxPoolStartTime",            MaxPoolStartTime,              s_dbg->maxpool_start_time);
+    check("MaxPoolEndTime",              MaxPoolEndTime,                s_dbg->maxpool_end_time);
+    check_d("MaxPoolExecutionTime",      MaxPoolExecutionTime,          s_dbg->maxpool_execution_time);
+    check("AvgpoolTimeInMilliSec",       AvgpoolTimeInMilliSec,         s_dbg->avgpool_time_ms);
+    check("AvgpoolCommSent",             AvgpoolCommSent,               s_dbg->avgpool_comm_sent);
+    check("AvgPool_layer_count",         (uint64_t)AvgPool_layer_count, (uint64_t)s_dbg->avgpool_layer_count);
+    check("AvgPoolTotalPowerConsumption",AvgPoolTotalPowerConsumption,  s_dbg->avgpool_total_power_uw);
+    check("AvgPoolStartTime",            AvgPoolStartTime,              s_dbg->avgpool_start_time);
+    check("AvgPoolEndTime",              AvgPoolEndTime,                s_dbg->avgpool_end_time);
+    check_d("AvgPoolExecutionTime",      AvgPoolExecutionTime,          s_dbg->avgpool_execution_time);
+    check("ArgMaxTimeInMilliSec",        ArgMaxTimeInMilliSec,          s_dbg->argmax_time_ms);
+    check("ArgMaxCommSent",              ArgMaxCommSent,                s_dbg->argmax_comm_sent);
+    check("ArgMax_layer_count",          (uint64_t)ArgMax_layer_count,  (uint64_t)s_dbg->argmax_layer_count);
+    check("ArgMaxTotalPowerConsumption", ArgMaxTotalPowerConsumption,   s_dbg->argmax_total_power_uw);
+    check("ArgMaxStartTime",             ArgMaxStartTime,               s_dbg->argmax_start_time);
+    check("ArgMaxEndTime",               ArgMaxEndTime,                 s_dbg->argmax_end_time);
+    check_d("ArgMaxExecutionTime",       ArgMaxExecutionTime,           s_dbg->argmax_execution_time);
+    check("TruncationTimeInMilliSec",    TruncationTimeInMilliSec,      s_dbg->truncation_time_ms);
+    check("TruncationCommSent",          TruncationCommSent,            s_dbg->truncation_comm_sent);
+  }
+
   std::cout << "Total time in Conv = " << (ConvTimeInMilliSec / 1000.0)
             << " seconds." << std::endl;
   std::cout << "Total time in MatMul = " << (MatMulTimeInMilliSec / 1000.0)
