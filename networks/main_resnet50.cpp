@@ -1797,19 +1797,12 @@ void FusedBN(int32_t N, int32_t H, int32_t W, int32_t CI, int32_t fh,
   ClearMemSecret1(CO * CI * fh * fw, scaled_filters);
 }
 
-#define gINPUT std::cin
+// gINPUT is redirected to the in param so cheetah-server can feed per-client socket streams
+#define gINPUT in
 #define gINPUTCLOSE
-int main(int argc, char **argv) {
-  ArgMapping amap;
-
-  amap.arg("r", party, "Role of party: ALICE/SERVER = 1; BOB/CLIENT = 2");
-  amap.arg("p", port, "Port Number");
-  amap.arg("ip", address, "IP Address of server (ALICE)");
-  amap.arg("nt", num_threads, "Number of Threads");
-  amap.arg("ell", bitlength, "Uniform Bitwidth");
-  amap.arg("k", kScale, "bits of scale");
-  amap.parse(argc, argv);
-
+// Entry point for running one ResNet50 inference
+void run_resnet50(std::istream &in, std::ostream &out) {
+  (void)out;
   assert(party == SERVER || party == CLIENT);
   std::cerr << "Loading input from stdin..." << std::endl;
 
@@ -6424,4 +6417,21 @@ int main(int argc, char **argv) {
   }
 
   finalize();
+}
+#undef gINPUT
+#undef gINPUTCLOSE
+
+int main(int argc, char **argv) {
+  ArgMapping amap;
+
+  amap.arg("r", party, "Role of party: ALICE/SERVER = 1; BOB/CLIENT = 2");
+  amap.arg("p", port, "Port Number");
+  amap.arg("ip", address, "IP Address of server (ALICE)");
+  amap.arg("nt", num_threads, "Number of Threads");
+  amap.arg("ell", bitlength, "Uniform Bitwidth");
+  amap.arg("k", kScale, "bits of scale");
+  amap.parse(argc, argv);
+
+  run_resnet50(std::cin, std::cout);
+  return 0;
 }

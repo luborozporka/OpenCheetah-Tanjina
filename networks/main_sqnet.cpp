@@ -2261,18 +2261,9 @@ void ScaleDown4(int64_t s1, int64_t s2, int64_t s3, int64_t s4, uint64_t *arr,
   ClearMemSecret1(size, reshapedArr);
 }
 
-int main(int argc, char **argv) {
-  ArgMapping amap;
-
-  amap.arg("r", party, "Role of party: ALICE/SERVER = 1; BOB/CLIENT = 2");
-  amap.arg("p", port, "Port Number");
-  amap.arg("ip", address, "IP Address of server (ALICE)");
-  amap.arg("nt", num_threads, "Number of Threads");
-  amap.arg("ell", bitlength, "Uniform Bitwidth");
-  amap.arg("k", kScale, "scaling factor");
-
-  amap.parse(argc, argv);
-
+// Entry point for running one SqueezeNet inference
+void run_sqnet(std::istream &in, std::ostream &out) {
+  (void)out;
   assert(party == SERVER || party == CLIENT);
   std::cerr << "Loading input from stdin..." << std::endl;
 
@@ -2295,7 +2286,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)227; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)3; i3++) {
           if ((party == CLIENT)) {
-            cin >> __tmp_in_tmp0;
+            in >> __tmp_in_tmp0;
           }
           Arr4DIdxRowM(tmp0, (int32_t)1, (int32_t)227, (int32_t)227, (int32_t)3,
                        i0, i1, i2, i3) = (party == CLIENT) ? __tmp_in_tmp0 : 0;
@@ -2314,7 +2305,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)3; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)64; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp1;
+            in >> __tmp_in_tmp1;
           }
           Arr4DIdxRowM(tmp1, (int32_t)3, (int32_t)3, (int32_t)3, (int32_t)64,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp1 : 0;
@@ -2329,7 +2320,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp2;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)64; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp2;
+      in >> __tmp_in_tmp2;
     }
     Arr1DIdxRowM(tmp2, (int32_t)64, i0) = (party == SERVER) ? __tmp_in_tmp2 : 0;
   }
@@ -2344,7 +2335,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)64; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)16; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp3;
+            in >> __tmp_in_tmp3;
           }
           Arr4DIdxRowM(tmp3, (int32_t)1, (int32_t)1, (int32_t)64, (int32_t)16,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp3 : 0;
@@ -2359,7 +2350,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp4;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)16; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp4;
+      in >> __tmp_in_tmp4;
     }
     Arr1DIdxRowM(tmp4, (int32_t)16, i0) = (party == SERVER) ? __tmp_in_tmp4 : 0;
   }
@@ -2374,7 +2365,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)16; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)64; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp5;
+            in >> __tmp_in_tmp5;
           }
           Arr4DIdxRowM(tmp5, (int32_t)1, (int32_t)1, (int32_t)16, (int32_t)64,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp5 : 0;
@@ -2389,7 +2380,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp6;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)64; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp6;
+      in >> __tmp_in_tmp6;
     }
     Arr1DIdxRowM(tmp6, (int32_t)64, i0) = (party == SERVER) ? __tmp_in_tmp6 : 0;
   }
@@ -2404,7 +2395,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)16; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)64; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp7;
+            in >> __tmp_in_tmp7;
           }
           Arr4DIdxRowM(tmp7, (int32_t)3, (int32_t)3, (int32_t)16, (int32_t)64,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp7 : 0;
@@ -2419,7 +2410,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp8;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)64; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp8;
+      in >> __tmp_in_tmp8;
     }
     Arr1DIdxRowM(tmp8, (int32_t)64, i0) = (party == SERVER) ? __tmp_in_tmp8 : 0;
   }
@@ -2434,7 +2425,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)128; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)16; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp9;
+            in >> __tmp_in_tmp9;
           }
           Arr4DIdxRowM(tmp9, (int32_t)1, (int32_t)1, (int32_t)128, (int32_t)16,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp9 : 0;
@@ -2449,7 +2440,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp10;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)16; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp10;
+      in >> __tmp_in_tmp10;
     }
     Arr1DIdxRowM(tmp10, (int32_t)16, i0) =
         (party == SERVER) ? __tmp_in_tmp10 : 0;
@@ -2465,7 +2456,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)16; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)64; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp11;
+            in >> __tmp_in_tmp11;
           }
           Arr4DIdxRowM(tmp11, (int32_t)1, (int32_t)1, (int32_t)16, (int32_t)64,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp11 : 0;
@@ -2480,7 +2471,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp12;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)64; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp12;
+      in >> __tmp_in_tmp12;
     }
     Arr1DIdxRowM(tmp12, (int32_t)64, i0) =
         (party == SERVER) ? __tmp_in_tmp12 : 0;
@@ -2496,7 +2487,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)16; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)64; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp13;
+            in >> __tmp_in_tmp13;
           }
           Arr4DIdxRowM(tmp13, (int32_t)3, (int32_t)3, (int32_t)16, (int32_t)64,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp13 : 0;
@@ -2511,7 +2502,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp14;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)64; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp14;
+      in >> __tmp_in_tmp14;
     }
     Arr1DIdxRowM(tmp14, (int32_t)64, i0) =
         (party == SERVER) ? __tmp_in_tmp14 : 0;
@@ -2527,7 +2518,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)128; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)32; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp15;
+            in >> __tmp_in_tmp15;
           }
           Arr4DIdxRowM(tmp15, (int32_t)1, (int32_t)1, (int32_t)128, (int32_t)32,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp15 : 0;
@@ -2542,7 +2533,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp16;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)32; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp16;
+      in >> __tmp_in_tmp16;
     }
     Arr1DIdxRowM(tmp16, (int32_t)32, i0) =
         (party == SERVER) ? __tmp_in_tmp16 : 0;
@@ -2558,7 +2549,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)32; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)128; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp17;
+            in >> __tmp_in_tmp17;
           }
           Arr4DIdxRowM(tmp17, (int32_t)1, (int32_t)1, (int32_t)32, (int32_t)128,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp17 : 0;
@@ -2573,7 +2564,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp18;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)128; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp18;
+      in >> __tmp_in_tmp18;
     }
     Arr1DIdxRowM(tmp18, (int32_t)128, i0) =
         (party == SERVER) ? __tmp_in_tmp18 : 0;
@@ -2589,7 +2580,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)32; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)128; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp19;
+            in >> __tmp_in_tmp19;
           }
           Arr4DIdxRowM(tmp19, (int32_t)3, (int32_t)3, (int32_t)32, (int32_t)128,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp19 : 0;
@@ -2604,7 +2595,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp20;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)128; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp20;
+      in >> __tmp_in_tmp20;
     }
     Arr1DIdxRowM(tmp20, (int32_t)128, i0) =
         (party == SERVER) ? __tmp_in_tmp20 : 0;
@@ -2620,7 +2611,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)256; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)32; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp21;
+            in >> __tmp_in_tmp21;
           }
           Arr4DIdxRowM(tmp21, (int32_t)1, (int32_t)1, (int32_t)256, (int32_t)32,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp21 : 0;
@@ -2635,7 +2626,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp22;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)32; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp22;
+      in >> __tmp_in_tmp22;
     }
     Arr1DIdxRowM(tmp22, (int32_t)32, i0) =
         (party == SERVER) ? __tmp_in_tmp22 : 0;
@@ -2651,7 +2642,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)32; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)128; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp23;
+            in >> __tmp_in_tmp23;
           }
           Arr4DIdxRowM(tmp23, (int32_t)1, (int32_t)1, (int32_t)32, (int32_t)128,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp23 : 0;
@@ -2666,7 +2657,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp24;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)128; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp24;
+      in >> __tmp_in_tmp24;
     }
     Arr1DIdxRowM(tmp24, (int32_t)128, i0) =
         (party == SERVER) ? __tmp_in_tmp24 : 0;
@@ -2682,7 +2673,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)32; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)128; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp25;
+            in >> __tmp_in_tmp25;
           }
           Arr4DIdxRowM(tmp25, (int32_t)3, (int32_t)3, (int32_t)32, (int32_t)128,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp25 : 0;
@@ -2697,7 +2688,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp26;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)128; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp26;
+      in >> __tmp_in_tmp26;
     }
     Arr1DIdxRowM(tmp26, (int32_t)128, i0) =
         (party == SERVER) ? __tmp_in_tmp26 : 0;
@@ -2713,7 +2704,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)256; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)48; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp27;
+            in >> __tmp_in_tmp27;
           }
           Arr4DIdxRowM(tmp27, (int32_t)1, (int32_t)1, (int32_t)256, (int32_t)48,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp27 : 0;
@@ -2728,7 +2719,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp28;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)48; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp28;
+      in >> __tmp_in_tmp28;
     }
     Arr1DIdxRowM(tmp28, (int32_t)48, i0) =
         (party == SERVER) ? __tmp_in_tmp28 : 0;
@@ -2744,7 +2735,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)48; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)192; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp29;
+            in >> __tmp_in_tmp29;
           }
           Arr4DIdxRowM(tmp29, (int32_t)1, (int32_t)1, (int32_t)48, (int32_t)192,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp29 : 0;
@@ -2759,7 +2750,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp30;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)192; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp30;
+      in >> __tmp_in_tmp30;
     }
     Arr1DIdxRowM(tmp30, (int32_t)192, i0) =
         (party == SERVER) ? __tmp_in_tmp30 : 0;
@@ -2775,7 +2766,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)48; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)192; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp31;
+            in >> __tmp_in_tmp31;
           }
           Arr4DIdxRowM(tmp31, (int32_t)3, (int32_t)3, (int32_t)48, (int32_t)192,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp31 : 0;
@@ -2790,7 +2781,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp32;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)192; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp32;
+      in >> __tmp_in_tmp32;
     }
     Arr1DIdxRowM(tmp32, (int32_t)192, i0) =
         (party == SERVER) ? __tmp_in_tmp32 : 0;
@@ -2806,7 +2797,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)384; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)48; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp33;
+            in >> __tmp_in_tmp33;
           }
           Arr4DIdxRowM(tmp33, (int32_t)1, (int32_t)1, (int32_t)384, (int32_t)48,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp33 : 0;
@@ -2821,7 +2812,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp34;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)48; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp34;
+      in >> __tmp_in_tmp34;
     }
     Arr1DIdxRowM(tmp34, (int32_t)48, i0) =
         (party == SERVER) ? __tmp_in_tmp34 : 0;
@@ -2837,7 +2828,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)48; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)192; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp35;
+            in >> __tmp_in_tmp35;
           }
           Arr4DIdxRowM(tmp35, (int32_t)1, (int32_t)1, (int32_t)48, (int32_t)192,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp35 : 0;
@@ -2852,7 +2843,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp36;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)192; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp36;
+      in >> __tmp_in_tmp36;
     }
     Arr1DIdxRowM(tmp36, (int32_t)192, i0) =
         (party == SERVER) ? __tmp_in_tmp36 : 0;
@@ -2868,7 +2859,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)48; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)192; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp37;
+            in >> __tmp_in_tmp37;
           }
           Arr4DIdxRowM(tmp37, (int32_t)3, (int32_t)3, (int32_t)48, (int32_t)192,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp37 : 0;
@@ -2883,7 +2874,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp38;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)192; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp38;
+      in >> __tmp_in_tmp38;
     }
     Arr1DIdxRowM(tmp38, (int32_t)192, i0) =
         (party == SERVER) ? __tmp_in_tmp38 : 0;
@@ -2899,7 +2890,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)384; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)64; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp39;
+            in >> __tmp_in_tmp39;
           }
           Arr4DIdxRowM(tmp39, (int32_t)1, (int32_t)1, (int32_t)384, (int32_t)64,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp39 : 0;
@@ -2914,7 +2905,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp40;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)64; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp40;
+      in >> __tmp_in_tmp40;
     }
     Arr1DIdxRowM(tmp40, (int32_t)64, i0) =
         (party == SERVER) ? __tmp_in_tmp40 : 0;
@@ -2930,7 +2921,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)64; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)256; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp41;
+            in >> __tmp_in_tmp41;
           }
           Arr4DIdxRowM(tmp41, (int32_t)1, (int32_t)1, (int32_t)64, (int32_t)256,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp41 : 0;
@@ -2945,7 +2936,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp42;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)256; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp42;
+      in >> __tmp_in_tmp42;
     }
     Arr1DIdxRowM(tmp42, (int32_t)256, i0) =
         (party == SERVER) ? __tmp_in_tmp42 : 0;
@@ -2961,7 +2952,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)64; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)256; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp43;
+            in >> __tmp_in_tmp43;
           }
           Arr4DIdxRowM(tmp43, (int32_t)3, (int32_t)3, (int32_t)64, (int32_t)256,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp43 : 0;
@@ -2976,7 +2967,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp44;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)256; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp44;
+      in >> __tmp_in_tmp44;
     }
     Arr1DIdxRowM(tmp44, (int32_t)256, i0) =
         (party == SERVER) ? __tmp_in_tmp44 : 0;
@@ -2992,7 +2983,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)512; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)64; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp45;
+            in >> __tmp_in_tmp45;
           }
           Arr4DIdxRowM(tmp45, (int32_t)1, (int32_t)1, (int32_t)512, (int32_t)64,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp45 : 0;
@@ -3007,7 +2998,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp46;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)64; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp46;
+      in >> __tmp_in_tmp46;
     }
     Arr1DIdxRowM(tmp46, (int32_t)64, i0) =
         (party == SERVER) ? __tmp_in_tmp46 : 0;
@@ -3023,7 +3014,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)64; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)256; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp47;
+            in >> __tmp_in_tmp47;
           }
           Arr4DIdxRowM(tmp47, (int32_t)1, (int32_t)1, (int32_t)64, (int32_t)256,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp47 : 0;
@@ -3038,7 +3029,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp48;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)256; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp48;
+      in >> __tmp_in_tmp48;
     }
     Arr1DIdxRowM(tmp48, (int32_t)256, i0) =
         (party == SERVER) ? __tmp_in_tmp48 : 0;
@@ -3054,7 +3045,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)64; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)256; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp49;
+            in >> __tmp_in_tmp49;
           }
           Arr4DIdxRowM(tmp49, (int32_t)3, (int32_t)3, (int32_t)64, (int32_t)256,
                        i0, i1, i2, i3) = (party == SERVER) ? __tmp_in_tmp49 : 0;
@@ -3069,7 +3060,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp50;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)256; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp50;
+      in >> __tmp_in_tmp50;
     }
     Arr1DIdxRowM(tmp50, (int32_t)256, i0) =
         (party == SERVER) ? __tmp_in_tmp50 : 0;
@@ -3085,7 +3076,7 @@ int main(int argc, char **argv) {
       for (uint64_t i2 = (uint64_t)0; i2 < (int32_t)512; i2++) {
         for (uint64_t i3 = (uint64_t)0; i3 < (int32_t)1000; i3++) {
           if ((party == SERVER)) {
-            cin >> __tmp_in_tmp51;
+            in >> __tmp_in_tmp51;
           }
           Arr4DIdxRowM(tmp51, (int32_t)1, (int32_t)1, (int32_t)512,
                        (int32_t)1000, i0, i1, i2, i3) =
@@ -3101,7 +3092,7 @@ int main(int argc, char **argv) {
   uint64_t __tmp_in_tmp52;
   for (uint64_t i0 = (uint64_t)0; i0 < (int32_t)1000; i0++) {
     if ((party == SERVER)) {
-      cin >> __tmp_in_tmp52;
+      in >> __tmp_in_tmp52;
     }
     Arr1DIdxRowM(tmp52, (int32_t)1000, i0) =
         (party == SERVER) ? __tmp_in_tmp52 : 0;
@@ -3863,4 +3854,20 @@ int main(int argc, char **argv) {
     }
   }
   finalize();
+}
+
+int main(int argc, char **argv) {
+  ArgMapping amap;
+
+  amap.arg("r", party, "Role of party: ALICE/SERVER = 1; BOB/CLIENT = 2");
+  amap.arg("p", port, "Port Number");
+  amap.arg("ip", address, "IP Address of server (ALICE)");
+  amap.arg("nt", num_threads, "Number of Threads");
+  amap.arg("ell", bitlength, "Uniform Bitwidth");
+  amap.arg("k", kScale, "scaling factor");
+
+  amap.parse(argc, argv);
+
+  run_sqnet(std::cin, std::cout);
+  return 0;
 }
