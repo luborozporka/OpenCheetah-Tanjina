@@ -2038,15 +2038,18 @@ void StartComputation() {
 
   std::cout << "After one-time setup, communication" << std::endl;
   start_time = std::chrono::high_resolution_clock::now();
+  g_main_session.start_time() = start_time;
   for (int i = 0; i < num_threads; i++) {
     auto temp = ioArr[i]->counter;
     comm_threads[i] = temp;
+    g_main_session.comm_threads(i) = temp;
     std::cout << "Thread i = " << i << ", total data sent till now = " << temp
               << std::endl;
   }
   std::cout << "-----------Syncronizing-----------" << std::endl;
   io->sync();
   num_rounds = io->num_rounds;
+  g_main_session.num_rounds() = num_rounds;
   std::cout << "secret_share_mod: " << prime_mod << " bitlength: " << bitlength << std::endl;
   std::cout << "backend: " << backend << std::endl;
   std::cout << "-----------Syncronized - now starting execution-----------"
@@ -2054,17 +2057,21 @@ void StartComputation() {
 }
 
 void EndComputation() {
+  sci::Session *sp = sci::CurrentSession();
+  assert(sp != nullptr && "EndComputation: no current session");
+  sci::Session &s = *sp;
+
   auto endTimer = std::chrono::high_resolution_clock::now();
   auto execTimeInMilliSec =
       std::chrono::duration_cast<std::chrono::milliseconds>(endTimer -
-                                                            start_time)
+                                                            s.start_time())
           .count();
   uint64_t totalComm = 0;
   for (int i = 0; i < num_threads; i++) {
-    auto temp = ioArr[i]->counter;
+    auto temp = s.ioArr()[i]->counter;
     std::cout << "Thread i = " << i << ", total data sent till now = " << temp
               << std::endl;
-    totalComm += (temp - comm_threads[i]);
+    totalComm += (temp - s.comm_threads(i));
   }
   uint64_t totalCommClient;
   std::cout << "------------------------------------------------------\n";
@@ -2074,15 +2081,15 @@ void EndComputation() {
             << " milliseconds.\n";
   std::cout << "Total data sent = " << (totalComm / (1.0 * (1ULL << 20)))
             << " MiB." << std::endl;
-  std::cout << "Number of rounds = " << ioArr[0]->num_rounds - num_rounds
+  std::cout << "Number of rounds = " << s.ioArr()[0]->num_rounds - s.num_rounds()
             << std::endl;
   if (party == SERVER) {
-    io->recv_data(&totalCommClient, sizeof(uint64_t));
+    s.io()->recv_data(&totalCommClient, sizeof(uint64_t));
     std::cout << "Total comm (sent+received) = "
               << ((totalComm + totalCommClient) / (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
   } else if (party == CLIENT) {
-    io->send_data(&totalComm, sizeof(uint64_t));
+    s.io()->send_data(&totalComm, sizeof(uint64_t));
     std::cout << "Total comm (sent+received) = (see SERVER OUTPUT)"
               << std::endl;
   }
@@ -2161,112 +2168,112 @@ void EndComputation() {
     check("TruncationCommSent",          TruncationCommSent,            s_dbg->truncation_comm_sent);
   }
 
-  std::cout << "Total time in Conv = " << (ConvTimeInMilliSec / 1000.0)
+  std::cout << "Total time in Conv = " << (s.conv_time_ms / 1000.0)
             << " seconds." << std::endl;
-  std::cout << "Total time in MatMul = " << (MatMulTimeInMilliSec / 1000.0)
+  std::cout << "Total time in MatMul = " << (s.matmul_time_ms / 1000.0)
             << " seconds." << std::endl;
-  std::cout << "Total time in BatchNorm = " << (BatchNormInMilliSec / 1000.0)
+  std::cout << "Total time in BatchNorm = " << (s.batch_norm_time_ms / 1000.0)
             << " seconds." << std::endl;
   std::cout << "Total time in Truncation = "
-            << (TruncationTimeInMilliSec / 1000.0) << " seconds." << std::endl;
-  std::cout << "Total time in Relu = " << (ReluTimeInMilliSec / 1000.0)
+            << (s.truncation_time_ms / 1000.0) << " seconds." << std::endl;
+  std::cout << "Total time in Relu = " << (s.relu_time_ms / 1000.0)
             << " seconds." << std::endl;
-  std::cout << "Total time in MaxPool = " << (MaxpoolTimeInMilliSec / 1000.0)
+  std::cout << "Total time in MaxPool = " << (s.maxpool_time_ms / 1000.0)
             << " seconds." << std::endl;
-  std::cout << "Total time in AvgPool = " << (AvgpoolTimeInMilliSec / 1000.0)
+  std::cout << "Total time in AvgPool = " << (s.avgpool_time_ms / 1000.0)
             << " seconds." << std::endl;
-  std::cout << "Total time in ArgMax = " << (ArgMaxTimeInMilliSec / 1000.0)
+  std::cout << "Total time in ArgMax = " << (s.argmax_time_ms / 1000.0)
             << " seconds." << std::endl;
-  std::cout << "Total time in MatAdd = " << (MatAddTimeInMilliSec / 1000.0)
+  std::cout << "Total time in MatAdd = " << (s.mat_add_time_ms / 1000.0)
             << " seconds." << std::endl;
   std::cout << "Total time in MatAddBroadCast = "
-            << (MatAddBroadCastTimeInMilliSec / 1000.0) << " seconds."
+            << (s.mat_add_broadcast_time_ms / 1000.0) << " seconds."
             << std::endl;
-  std::cout << "Total time in MulCir = " << (MulCirTimeInMilliSec / 1000.0)
+  std::cout << "Total time in MulCir = " << (s.mul_cir_time_ms / 1000.0)
             << " seconds." << std::endl;
   std::cout << "Total time in ScalarMul = "
-            << (ScalarMulTimeInMilliSec / 1000.0) << " seconds." << std::endl;
-  std::cout << "Total time in Sigmoid = " << (SigmoidTimeInMilliSec / 1000.0)
+            << (s.scalar_mul_time_ms / 1000.0) << " seconds." << std::endl;
+  std::cout << "Total time in Sigmoid = " << (s.sigmoid_time_ms / 1000.0)
             << " seconds." << std::endl;
-  std::cout << "Total time in Tanh = " << (TanhTimeInMilliSec / 1000.0)
+  std::cout << "Total time in Tanh = " << (s.tanh_time_ms / 1000.0)
             << " seconds." << std::endl;
-  std::cout << "Total time in Sqrt = " << (SqrtTimeInMilliSec / 1000.0)
+  std::cout << "Total time in Sqrt = " << (s.sqrt_time_ms / 1000.0)
             << " seconds." << std::endl;
   std::cout << "Total time in NormaliseL2 = "
-            << (NormaliseL2TimeInMilliSec / 1000.0) << " seconds." << std::endl;
+            << (s.normalise_l2_time_ms / 1000.0) << " seconds." << std::endl;
   std::cout << "------------------------------------------------------\n";
-  std::cout << "Conv data sent = " << ((ConvCommSent) / (1.0 * (1ULL << 20)))
+  std::cout << "Conv data sent = " << ((s.conv_comm_sent) / (1.0 * (1ULL << 20)))
             << " MiB." << std::endl;
   std::cout << "MatMul data sent = "
-            << ((MatMulCommSent) / (1.0 * (1ULL << 20))) << " MiB."
+            << ((s.matmul_comm_sent) / (1.0 * (1ULL << 20))) << " MiB."
             << std::endl;
   std::cout << "BatchNorm data sent = "
-            << ((BatchNormCommSent) / (1.0 * (1ULL << 20))) << " MiB."
+            << ((s.batch_norm_comm_sent) / (1.0 * (1ULL << 20))) << " MiB."
             << std::endl;
   std::cout << "Truncation data sent = "
-            << ((TruncationCommSent) / (1.0 * (1ULL << 20))) << " MiB."
+            << ((s.truncation_comm_sent) / (1.0 * (1ULL << 20))) << " MiB."
             << std::endl;
-  std::cout << "Relu data sent = " << ((ReluCommSent) / (1.0 * (1ULL << 20)))
+  std::cout << "Relu data sent = " << ((s.relu_comm_sent) / (1.0 * (1ULL << 20)))
             << " MiB." << std::endl;
   std::cout << "Maxpool data sent = "
-            << ((MaxpoolCommSent) / (1.0 * (1ULL << 20))) << " MiB."
+            << ((s.maxpool_comm_sent) / (1.0 * (1ULL << 20))) << " MiB."
             << std::endl;
   std::cout << "Avgpool data sent = "
-            << ((AvgpoolCommSent) / (1.0 * (1ULL << 20))) << " MiB."
+            << ((s.avgpool_comm_sent) / (1.0 * (1ULL << 20))) << " MiB."
             << std::endl;
   std::cout << "ArgMax data sent = "
-            << ((ArgMaxCommSent) / (1.0 * (1ULL << 20))) << " MiB."
+            << ((s.argmax_comm_sent) / (1.0 * (1ULL << 20))) << " MiB."
             << std::endl;
   std::cout << "MatAdd data sent = "
-            << ((MatAddCommSent) / (1.0 * (1ULL << 20))) << " MiB."
+            << ((s.mat_add_comm_sent) / (1.0 * (1ULL << 20))) << " MiB."
             << std::endl;
   std::cout << "MatAddBroadCast data sent = "
-            << ((MatAddBroadCastCommSent) / (1.0 * (1ULL << 20))) << " MiB."
+            << ((s.mat_add_broadcast_comm_sent) / (1.0 * (1ULL << 20))) << " MiB."
             << std::endl;
   std::cout << "MulCir data sent = "
-            << ((MulCirCommSent) / (1.0 * (1ULL << 20))) << " MiB."
+            << ((s.mul_cir_comm_sent) / (1.0 * (1ULL << 20))) << " MiB."
             << std::endl;
   std::cout << "Sigmoid data sent = "
-            << ((SigmoidCommSent) / (1.0 * (1ULL << 20))) << " MiB."
+            << ((s.sigmoid_comm_sent) / (1.0 * (1ULL << 20))) << " MiB."
             << std::endl;
-  std::cout << "Tanh data sent = " << ((TanhCommSent) / (1.0 * (1ULL << 20)))
+  std::cout << "Tanh data sent = " << ((s.tanh_comm_sent) / (1.0 * (1ULL << 20)))
             << " MiB." << std::endl;
-  std::cout << "Sqrt data sent = " << ((SqrtCommSent) / (1.0 * (1ULL << 20)))
+  std::cout << "Sqrt data sent = " << ((s.sqrt_comm_sent) / (1.0 * (1ULL << 20)))
             << " MiB." << std::endl;
   std::cout << "NormaliseL2 data sent = "
-            << ((NormaliseL2CommSent) / (1.0 * (1ULL << 20))) << " MiB."
+            << ((s.normalise_l2_comm_sent) / (1.0 * (1ULL << 20))) << " MiB."
             << std::endl;
   std::cout << "------------------------------------------------------\n";
   // Added by Tanjina - for power readings (total)
-  std::cout << "Total power consumption in Conv layer = " << (ConvTotalPowerConsumption / 1000000.0) // Convert from micro watts to watts
+  std::cout << "Total power consumption in Conv layer = " << (s.conv_total_power_uw / 1000000.0)
             << " watts." << std::endl;
-  std::cout << "Total power consumption in Relu layer = " << (ReluTotalPowerConsumption / 1000000.0) // Convert from micro watts to watts
+  std::cout << "Total power consumption in Relu layer = " << (s.relu_total_power_uw / 1000000.0)
             << " watts." << std::endl;
-  std::cout << "Total power consumption in MaxPool layer = " << (MaxPoolTotalPowerConsumption / 1000000.0) // Convert from micro watts to watts
+  std::cout << "Total power consumption in MaxPool layer = " << (s.maxpool_total_power_uw / 1000000.0)
             << " watts." << std::endl;
-  std::cout << "Total power consumption in BatchNorm layer = " << (BatchNormTotalPowerConsumption / 1000000.0) // Convert from micro watts to watts
+  std::cout << "Total power consumption in BatchNorm layer = " << (s.batch_norm_total_power_uw / 1000000.0)
             << " watts." << std::endl;
-  std::cout << "Total power consumption in MatMul layer = " << (MatMulTotalPowerConsumption / 1000000.0) // Convert from micro watts to watts
+  std::cout << "Total power consumption in MatMul layer = " << (s.matmul_total_power_uw / 1000000.0)
             << " watts." << std::endl;
-  std::cout << "Total power consumption in AvgPool layer = " << (AvgPoolTotalPowerConsumption / 1000000.0) // Convert from micro watts to watts
+  std::cout << "Total power consumption in AvgPool layer = " << (s.avgpool_total_power_uw / 1000000.0)
             << " watts." << std::endl;
-  std::cout << "Total power consumption in ArgMax layer = " << (ArgMaxTotalPowerConsumption / 1000000.0) // Convert from micro watts to watts
+  std::cout << "Total power consumption in ArgMax layer = " << (s.argmax_total_power_uw / 1000000.0)
             << " watts." << std::endl;
   std::cout << "------------------------------------------------------\n";
   // Added by Tanjina - for layer counts
-  std::cout << "Total number of Conv layer = " << Conv_layer_count
+  std::cout << "Total number of Conv layer = " << s.conv_layer_count
             << " layers" << std::endl;
-  std::cout << "Total number of Relu layer = " << Relu_layer_count
+  std::cout << "Total number of Relu layer = " << s.relu_layer_count
             << " layers" << std::endl;
-  std::cout << "Total number of MaxPool layer = " << MaxPool_layer_count
+  std::cout << "Total number of MaxPool layer = " << s.maxpool_layer_count
             << " layers" << std::endl;
-  std::cout << "Total number of BatchNorm layer = " << BatchNorm_layer_count
+  std::cout << "Total number of BatchNorm layer = " << s.batch_norm_layer_count
             << " layers" << std::endl;
-  std::cout << "Total number of MatMul layer = " << MatMul_layer_count
+  std::cout << "Total number of MatMul layer = " << s.matmul_layer_count
             << " layers" << std::endl;
-  std::cout << "Total number of AvgPool layer = " << AvgPool_layer_count
+  std::cout << "Total number of AvgPool layer = " << s.avgpool_layer_count
             << " layers" << std::endl;
-  std::cout << "Total number of ArgMax layer = " << ArgMax_layer_count
+  std::cout << "Total number of ArgMax layer = " << s.argmax_layer_count
             << " layers" << std::endl;
   std::cout << "------------------------------------------------------\n";
 
@@ -2288,81 +2295,81 @@ void EndComputation() {
     uint64_t SqrtCommSentClient = 0;
     uint64_t NormaliseL2CommSentClient = 0;
 
-    io->recv_data(&ConvCommSentClient, sizeof(uint64_t));
-    io->recv_data(&MatMulCommSentClient, sizeof(uint64_t));
-    io->recv_data(&BatchNormCommSentClient, sizeof(uint64_t));
-    io->recv_data(&TruncationCommSentClient, sizeof(uint64_t));
-    io->recv_data(&ReluCommSentClient, sizeof(uint64_t));
-    io->recv_data(&MaxpoolCommSentClient, sizeof(uint64_t));
-    io->recv_data(&AvgpoolCommSentClient, sizeof(uint64_t));
-    io->recv_data(&ArgMaxCommSentClient, sizeof(uint64_t));
-    io->recv_data(&MatAddCommSentClient, sizeof(uint64_t));
-    io->recv_data(&MatAddBroadCastCommSentClient, sizeof(uint64_t));
-    io->recv_data(&MulCirCommSentClient, sizeof(uint64_t));
-    io->recv_data(&ScalarMulCommSentClient, sizeof(uint64_t));
-    io->recv_data(&SigmoidCommSentClient, sizeof(uint64_t));
-    io->recv_data(&TanhCommSentClient, sizeof(uint64_t));
-    io->recv_data(&SqrtCommSentClient, sizeof(uint64_t));
-    io->recv_data(&NormaliseL2CommSentClient, sizeof(uint64_t));
+    s.io()->recv_data(&ConvCommSentClient, sizeof(uint64_t));
+    s.io()->recv_data(&MatMulCommSentClient, sizeof(uint64_t));
+    s.io()->recv_data(&BatchNormCommSentClient, sizeof(uint64_t));
+    s.io()->recv_data(&TruncationCommSentClient, sizeof(uint64_t));
+    s.io()->recv_data(&ReluCommSentClient, sizeof(uint64_t));
+    s.io()->recv_data(&MaxpoolCommSentClient, sizeof(uint64_t));
+    s.io()->recv_data(&AvgpoolCommSentClient, sizeof(uint64_t));
+    s.io()->recv_data(&ArgMaxCommSentClient, sizeof(uint64_t));
+    s.io()->recv_data(&MatAddCommSentClient, sizeof(uint64_t));
+    s.io()->recv_data(&MatAddBroadCastCommSentClient, sizeof(uint64_t));
+    s.io()->recv_data(&MulCirCommSentClient, sizeof(uint64_t));
+    s.io()->recv_data(&ScalarMulCommSentClient, sizeof(uint64_t));
+    s.io()->recv_data(&SigmoidCommSentClient, sizeof(uint64_t));
+    s.io()->recv_data(&TanhCommSentClient, sizeof(uint64_t));
+    s.io()->recv_data(&SqrtCommSentClient, sizeof(uint64_t));
+    s.io()->recv_data(&NormaliseL2CommSentClient, sizeof(uint64_t));
 
     std::cout << "Conv data (sent+received) = "
-              << ((ConvCommSent + ConvCommSentClient) / (1.0 * (1ULL << 20)))
+              << ((s.conv_comm_sent + ConvCommSentClient) / (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
     std::cout << "MatMul data (sent+received) = "
-              << ((MatMulCommSent + MatMulCommSentClient) /
+              << ((s.matmul_comm_sent + MatMulCommSentClient) /
                   (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
     std::cout << "BatchNorm data (sent+received) = "
-              << ((BatchNormCommSent + BatchNormCommSentClient) /
+              << ((s.batch_norm_comm_sent + BatchNormCommSentClient) /
                   (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
     std::cout << "Truncation data (sent+received) = "
-              << ((TruncationCommSent + TruncationCommSentClient) /
+              << ((s.truncation_comm_sent + TruncationCommSentClient) /
                   (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
     std::cout << "Relu data (sent+received) = "
-              << ((ReluCommSent + ReluCommSentClient) / (1.0 * (1ULL << 20)))
+              << ((s.relu_comm_sent + ReluCommSentClient) / (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
     std::cout << "Maxpool data (sent+received) = "
-              << ((MaxpoolCommSent + MaxpoolCommSentClient) /
+              << ((s.maxpool_comm_sent + MaxpoolCommSentClient) /
                   (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
     std::cout << "Avgpool data (sent+received) = "
-              << ((AvgpoolCommSent + AvgpoolCommSentClient) /
+              << ((s.avgpool_comm_sent + AvgpoolCommSentClient) /
                   (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
     std::cout << "ArgMax data (sent+received) = "
-              << ((ArgMaxCommSent + ArgMaxCommSentClient) /
+              << ((s.argmax_comm_sent + ArgMaxCommSentClient) /
                   (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
     std::cout << "MatAdd data (sent+received) = "
-              << ((MatAddCommSent + MatAddCommSentClient) /
+              << ((s.mat_add_comm_sent + MatAddCommSentClient) /
                   (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
     std::cout << "MatAddBroadCast data (sent+received) = "
-              << ((MatAddBroadCastCommSent + MatAddBroadCastCommSentClient) /
+              << ((s.mat_add_broadcast_comm_sent + MatAddBroadCastCommSentClient) /
                   (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
     std::cout << "MulCir data (sent+received) = "
-              << ((MulCirCommSent + MulCirCommSentClient) /
+              << ((s.mul_cir_comm_sent + MulCirCommSentClient) /
                   (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
     std::cout << "ScalarMul data (sent+received) = "
-              << ((ScalarMulCommSent + ScalarMulCommSentClient) /
+              << ((s.scalar_mul_comm_sent + ScalarMulCommSentClient) /
                   (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
     std::cout << "Sigmoid data (sent+received) = "
-              << ((SigmoidCommSent + SigmoidCommSentClient) /
+              << ((s.sigmoid_comm_sent + SigmoidCommSentClient) /
                   (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
     std::cout << "Tanh data (sent+received) = "
-              << ((TanhCommSent + TanhCommSentClient) / (1.0 * (1ULL << 20)))
+              << ((s.tanh_comm_sent + TanhCommSentClient) / (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
     std::cout << "Sqrt data (sent+received) = "
-              << ((SqrtCommSent + SqrtCommSentClient) / (1.0 * (1ULL << 20)))
+              << ((s.sqrt_comm_sent + SqrtCommSentClient) / (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
     std::cout << "NormaliseL2 data (sent+received) = "
-              << ((NormaliseL2CommSent + NormaliseL2CommSentClient) /
+              << ((s.normalise_l2_comm_sent + NormaliseL2CommSentClient) /
                   (1.0 * (1ULL << 20)))
               << " MiB." << std::endl;
 
@@ -2388,44 +2395,44 @@ void EndComputation() {
            << MILL_PARAM << "," << num_threads << ","
            << execTimeInMilliSec / 1000.0 << ","
            << (totalComm + totalCommClient) / (1.0 * (1ULL << 20)) << ","
-           << ConvTimeInMilliSec / 1000.0 << ","
-           << (ConvCommSent + ConvCommSentClient) / (1.0 * (1ULL << 20)) << ","
-           << MatMulTimeInMilliSec / 1000.0 << ","
-           << (MatMulCommSent + MatMulCommSentClient) / (1.0 * (1ULL << 20))
-           << "," << BatchNormInMilliSec / 1000.0 << ","
-           << (BatchNormCommSent + BatchNormCommSentClient) /
+           << s.conv_time_ms / 1000.0 << ","
+           << (s.conv_comm_sent + ConvCommSentClient) / (1.0 * (1ULL << 20)) << ","
+           << s.matmul_time_ms / 1000.0 << ","
+           << (s.matmul_comm_sent + MatMulCommSentClient) / (1.0 * (1ULL << 20))
+           << "," << s.batch_norm_time_ms / 1000.0 << ","
+           << (s.batch_norm_comm_sent + BatchNormCommSentClient) /
                   (1.0 * (1ULL << 20))
-           << "," << TruncationTimeInMilliSec / 1000.0 << ","
-           << (TruncationCommSent + TruncationCommSentClient) /
+           << "," << s.truncation_time_ms / 1000.0 << ","
+           << (s.truncation_comm_sent + TruncationCommSentClient) /
                   (1.0 * (1ULL << 20))
-           << "," << ReluTimeInMilliSec / 1000.0 << ","
-           << (ReluCommSent + ReluCommSentClient) / (1.0 * (1ULL << 20)) << ","
-           << MaxpoolTimeInMilliSec / 1000.0 << ","
-           << (MaxpoolCommSent + MaxpoolCommSentClient) / (1.0 * (1ULL << 20))
-           << "," << AvgpoolTimeInMilliSec / 1000.0 << ","
-           << (AvgpoolCommSent + AvgpoolCommSentClient) / (1.0 * (1ULL << 20))
-           << "," << ArgMaxTimeInMilliSec / 1000.0 << ","
-           << (ArgMaxCommSent + ArgMaxCommSentClient) / (1.0 * (1ULL << 20))
+           << "," << s.relu_time_ms / 1000.0 << ","
+           << (s.relu_comm_sent + ReluCommSentClient) / (1.0 * (1ULL << 20)) << ","
+           << s.maxpool_time_ms / 1000.0 << ","
+           << (s.maxpool_comm_sent + MaxpoolCommSentClient) / (1.0 * (1ULL << 20))
+           << "," << s.avgpool_time_ms / 1000.0 << ","
+           << (s.avgpool_comm_sent + AvgpoolCommSentClient) / (1.0 * (1ULL << 20))
+           << "," << s.argmax_time_ms / 1000.0 << ","
+           << (s.argmax_comm_sent + ArgMaxCommSentClient) / (1.0 * (1ULL << 20))
            << std::endl;
     result.close();
 #endif
   } else if (party == CLIENT) {
-    io->send_data(&ConvCommSent, sizeof(uint64_t));
-    io->send_data(&MatMulCommSent, sizeof(uint64_t));
-    io->send_data(&BatchNormCommSent, sizeof(uint64_t));
-    io->send_data(&TruncationCommSent, sizeof(uint64_t));
-    io->send_data(&ReluCommSent, sizeof(uint64_t));
-    io->send_data(&MaxpoolCommSent, sizeof(uint64_t));
-    io->send_data(&AvgpoolCommSent, sizeof(uint64_t));
-    io->send_data(&ArgMaxCommSent, sizeof(uint64_t));
-    io->send_data(&MatAddCommSent, sizeof(uint64_t));
-    io->send_data(&MatAddBroadCastCommSent, sizeof(uint64_t));
-    io->send_data(&MulCirCommSent, sizeof(uint64_t));
-    io->send_data(&ScalarMulCommSent, sizeof(uint64_t));
-    io->send_data(&SigmoidCommSent, sizeof(uint64_t));
-    io->send_data(&TanhCommSent, sizeof(uint64_t));
-    io->send_data(&SqrtCommSent, sizeof(uint64_t));
-    io->send_data(&NormaliseL2CommSent, sizeof(uint64_t));
+    s.io()->send_data(&s.conv_comm_sent, sizeof(uint64_t));
+    s.io()->send_data(&s.matmul_comm_sent, sizeof(uint64_t));
+    s.io()->send_data(&s.batch_norm_comm_sent, sizeof(uint64_t));
+    s.io()->send_data(&s.truncation_comm_sent, sizeof(uint64_t));
+    s.io()->send_data(&s.relu_comm_sent, sizeof(uint64_t));
+    s.io()->send_data(&s.maxpool_comm_sent, sizeof(uint64_t));
+    s.io()->send_data(&s.avgpool_comm_sent, sizeof(uint64_t));
+    s.io()->send_data(&s.argmax_comm_sent, sizeof(uint64_t));
+    s.io()->send_data(&s.mat_add_comm_sent, sizeof(uint64_t));
+    s.io()->send_data(&s.mat_add_broadcast_comm_sent, sizeof(uint64_t));
+    s.io()->send_data(&s.mul_cir_comm_sent, sizeof(uint64_t));
+    s.io()->send_data(&s.scalar_mul_comm_sent, sizeof(uint64_t));
+    s.io()->send_data(&s.sigmoid_comm_sent, sizeof(uint64_t));
+    s.io()->send_data(&s.tanh_comm_sent, sizeof(uint64_t));
+    s.io()->send_data(&s.sqrt_comm_sent, sizeof(uint64_t));
+    s.io()->send_data(&s.normalise_l2_comm_sent, sizeof(uint64_t));
   }
 #endif
 
