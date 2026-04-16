@@ -213,13 +213,11 @@ void MatMul2D(sci::Session &s, int32_t s1, int32_t s2, int32_t s3,
 
 #ifdef LOG_LAYERWISE
   auto temp = TIMER_TILL_NOW;
-  MatMulTimeInMilliSec += temp;
   s.matmul_time_ms += temp;
   std::cout << "Time in sec for current matmul = " << (temp / 1000.0)
             << std::endl;
   uint64_t curComm;
   FIND_ALL_IO_TILL_NOW(curComm);
-  MatMulCommSent += curComm;
   s.matmul_comm_sent += curComm;
 #endif
 
@@ -358,7 +356,6 @@ void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
   auto cur_start = CURRENT_TIME;
   std::cout << "Current time of start for current conv = " << cur_start
             << std::endl;
-  ConvStartTime = cur_start; // Added by Tanjina to calculate the duration/execution time
   s.conv_start_time = cur_start;
 #endif
 
@@ -368,7 +365,6 @@ void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
 **/
 #ifdef LOG_LAYERWISE
   // conv layer counter
-  Conv_layer_count++;
   s.conv_layer_count++;
 
   std::cout << "STARTING ENERGY MEASUREMENT" << std::endl;
@@ -450,13 +446,11 @@ void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
 
 #ifdef LOG_LAYERWISE
   auto temp = TIMER_TILL_NOW;
-  ConvTimeInMilliSec += temp;
   s.conv_time_ms += temp;
   std::cout << "Time in sec for current conv = " << (temp / 1000.0)
             << std::endl;
   uint64_t curComm;
   FIND_ALL_IO_TILL_NOW(curComm);
-  ConvCommSent += curComm;
   s.conv_comm_sent += curComm;
 #endif
 
@@ -554,7 +548,6 @@ void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
   auto cur_end = CURRENT_TIME;
   std::cout << "Current time of end for current conv = " << cur_end
             << std::endl;
-  ConvEndTime = cur_end; // Added by Tanjina to calculate the duration/execution time
   s.conv_end_time = cur_end;
   // sleep(1); // Added by Tanjina 
 # endif
@@ -565,29 +558,26 @@ void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
 **/  
 #ifdef LOG_LAYERWISE
   std::vector<std::pair<uint64_t, int64_t>> power_readings = measurement.stop();
-  // ConvExecutionTime = (ConvEndTime - ConvStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
-  ConvExecutionTime = (ConvEndTime - ConvStartTime); // Note-Tanjina: Keep in milliseconds, need to do the conversion later
-  s.conv_execution_time = ConvExecutionTime;
+  s.conv_execution_time = (s.conv_end_time - s.conv_start_time);
  
   for(int i = 0; i < power_readings.size(); ++i){
     uint64_t avgPower = power_readings[i].first; // Note-Tanjina: Keep in microwatts, need to do the conversion later
     int64_t timestampPower = power_readings[i].second;
     // double avgPowerUsage = avgPower / 1000000.0;
 
-    ConvTotalPowerConsumption += avgPower;
     s.conv_total_power_uw += avgPower;
-    std::cout << "Tanjina-Power usage values from the power_reading for HomConv #" << Conv_layer_count << " : " << avgPower << " microwatts " << "Timestamp of the current power reading: " << timestampPower << " Conv layer start Timestamp: " << ConvStartTime << " Conv layer end Timestamp: " << ConvEndTime <<  " Execution time: " << ConvExecutionTime << " milliseconds" << std::endl;
+    std::cout << "Tanjina-Power usage values from the power_reading for HomConv #" << s.conv_layer_count << " : " << avgPower << " microwatts " << "Timestamp of the current power reading: " << timestampPower << " Conv layer start Timestamp: " << s.conv_start_time << " Conv layer end Timestamp: " << s.conv_end_time <<  " Execution time: " << s.conv_execution_time << " milliseconds" << std::endl;
     // std::cout <<  "Tanjina-NN architecture info: " << "Conv_N = " << N << " Conv_H = " << H << " Conv_W = " << W << " Conv_CI = " << CI << " Conv_FH = " << FH << " Conv_FW = " << FW << " Conv_CO = " << CO << " Conv_ zPadHLeft = " << zPadHLeft << " Conv_zPadHRight = " << zPadHRight << " Conv_zPadWLeft = " << zPadWLeft  << " Conv_zPadWRight = " << zPadWRight << " Conv_strideH = " << strideH << " Conv_strideW = " << strideW << std::endl;
     
     std::vector<csv_column_type> conv_data;
     conv_data.push_back(i);
     conv_data.push_back("Conv");
-    conv_data.push_back(Conv_layer_count);
+    conv_data.push_back(s.conv_layer_count);
     conv_data.push_back(timestampPower);
     conv_data.push_back(avgPower);
-    conv_data.push_back(ConvStartTime);
-    conv_data.push_back(ConvEndTime);
-    conv_data.push_back(ConvExecutionTime);
+    conv_data.push_back(s.conv_start_time);
+    conv_data.push_back(s.conv_end_time);
+    conv_data.push_back(s.conv_execution_time);
     conv_data.push_back(N);
     conv_data.push_back(H);
     conv_data.push_back(W);
@@ -667,13 +657,11 @@ void Conv2DGroupWrapper(sci::Session &s, signedIntType N, signedIntType H,
 
 #ifdef LOG_LAYERWISE
   auto temp = TIMER_TILL_NOW;
-  ConvTimeInMilliSec += temp;
   s.conv_time_ms += temp;
   std::cout << "Time in sec for current conv = " << (temp / 1000.0)
             << std::endl;
   uint64_t curComm;
   FIND_ALL_IO_TILL_NOW(curComm);
-  ConvCommSent += curComm;
   s.conv_comm_sent += curComm;
 #endif
 }
@@ -778,11 +766,9 @@ void ElemWiseActModelVectorMult(sci::Session &s, int32_t size, intType *inArr,
 
 #ifdef LOG_LAYERWISE
   auto temp = TIMER_TILL_NOW;
-  BatchNormInMilliSec += temp;
   s.batch_norm_time_ms += temp;
   uint64_t curComm;
   FIND_ALL_IO_TILL_NOW(curComm);
-  BatchNormCommSent += curComm;
   s.batch_norm_comm_sent += curComm;
   std::cout << "Time in sec for current BN = [" << (temp / 1000.0)
             << "] sent [" << (curComm / 1024. / 1024.) << "] MB"
@@ -857,7 +843,6 @@ void ArgMax(sci::Session &s, int32_t s1, int32_t s2, intType *inArr,
   auto cur_start = CURRENT_TIME;
   std::cout << "Current time of start for current ArgMax = " << cur_start
             << std::endl;
-  ArgMaxStartTime = cur_start; // Added by Tanjina to calculate the duration/execution time
   s.argmax_start_time = cur_start;
 #endif
 
@@ -867,7 +852,6 @@ void ArgMax(sci::Session &s, int32_t s1, int32_t s2, intType *inArr,
 **/
 #ifdef LOG_LAYERWISE
   // ArgMax layer counter
-  ArgMax_layer_count++;
   s.argmax_layer_count++;
 
   std::cout << "STARTING ENERGY MEASUREMENT" << std::endl;
@@ -893,11 +877,9 @@ void ArgMax(sci::Session &s, int32_t s1, int32_t s2, intType *inArr,
 
 #ifdef LOG_LAYERWISE
   auto temp = TIMER_TILL_NOW;
-  ArgMaxTimeInMilliSec += temp;
   s.argmax_time_ms += temp;
   uint64_t curComm;
   FIND_ALL_IO_TILL_NOW(curComm);
-  ArgMaxCommSent += curComm;
   s.argmax_comm_sent += curComm;
 #endif
 
@@ -948,7 +930,6 @@ void ArgMax(sci::Session &s, int32_t s1, int32_t s2, intType *inArr,
   auto cur_end = CURRENT_TIME;
   std::cout << "Current time of end for current ArgMax = " << cur_end
           << std::endl;
-  ArgMaxEndTime = cur_end; // Added by Tanjina to calculate the duration/execution time
   s.argmax_end_time = cur_end;
 #endif
 
@@ -958,18 +939,15 @@ void ArgMax(sci::Session &s, int32_t s1, int32_t s2, intType *inArr,
 **/
 #ifdef LOG_LAYERWISE
   std::vector<std::pair<uint64_t, int64_t>> power_readings = measurement.stop();
-  // ArgMaxExecutionTime = (ArgMaxEndTime - ArgMaxStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
-  ArgMaxExecutionTime = (ArgMaxEndTime - ArgMaxStartTime); // Note-Tanjina: Keep in milliseconds, need to do the conversion later
-  s.argmax_execution_time = ArgMaxExecutionTime;
+  s.argmax_execution_time = (s.argmax_end_time - s.argmax_start_time);
   
   for(int i = 0; i < power_readings.size(); ++i){
     uint64_t avgPower = power_readings[i].first;
     int64_t timestampPower = power_readings[i].second;
     double avgPowerUsage = avgPower / 1000000.0;
 
-    ArgMaxTotalPowerConsumption += avgPower;
     s.argmax_total_power_uw += avgPower;
-    std::cout << "Tanjina-Power usage values from the power_reading for ArgMax #" << ArgMax_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << ArgMaxExecutionTime << " seconds" << std::endl; 
+    std::cout << "Tanjina-Power usage values from the power_reading for ArgMax #" << s.argmax_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << s.argmax_execution_time << " seconds" << std::endl;
   }
         
 #endif
@@ -996,7 +974,6 @@ void Relu(sci::Session &s, int32_t size, intType *inArr, intType *outArr,
   auto cur_start = CURRENT_TIME;
   std::cout << "Current time of start for current relu = " << cur_start
             << std::endl;
-  ReluStartTime = cur_start; // Added by Tanjina to calculate the duration/execution time
   s.relu_start_time = cur_start;
 #endif
 
@@ -1006,7 +983,6 @@ void Relu(sci::Session &s, int32_t size, intType *inArr, intType *outArr,
 **/
 #ifdef LOG_LAYERWISE
   // Relu layer counter
-  Relu_layer_count++;
   s.relu_layer_count++;
 
   std::cout << "STARTING ENERGY MEASUREMENT" << std::endl;
@@ -1048,12 +1024,10 @@ void Relu(sci::Session &s, int32_t size, intType *inArr, intType *outArr,
 
 #ifdef LOG_LAYERWISE
   auto temp = TIMER_TILL_NOW;
-  ReluTimeInMilliSec += temp;
   s.relu_time_ms += temp;
   std::cout << "Time in sec for current relu = " << (temp / 1000.0) << std::endl;
   uint64_t curComm;
   FIND_ALL_IO_TILL_NOW(curComm);
-  ReluCommSent += curComm;
   s.relu_comm_sent += curComm;
 
   // Add by Eloise
@@ -1092,11 +1066,9 @@ void Relu(sci::Session &s, int32_t size, intType *inArr, intType *outArr,
 
 #ifdef LOG_LAYERWISE
     auto temp = TIMER_TILL_NOW;
-    TruncationTimeInMilliSec += temp;
     s.truncation_time_ms += temp;
     uint64_t curComm;
     FIND_ALL_IO_TILL_NOW(curComm);
-    TruncationCommSent += curComm;
     s.truncation_comm_sent += curComm;
 #endif
   } else {
@@ -1185,7 +1157,6 @@ void Relu(sci::Session &s, int32_t size, intType *inArr, intType *outArr,
   auto cur_end = CURRENT_TIME;
   std::cout << "Current time of end for current relu = " << cur_end
             << std::endl;
-  ReluEndTime = cur_end; // Added by Tanjina to calculate the duration/execution time
   s.relu_end_time = cur_end;
 #endif
 /** 
@@ -1194,18 +1165,15 @@ void Relu(sci::Session &s, int32_t size, intType *inArr, intType *outArr,
 **/
 #ifdef LOG_LAYERWISE
   std::vector<std::pair<uint64_t, int64_t>> power_readings = measurement.stop();
-  // ReluExecutionTime = (ReluEndTime - ReluStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
-  ReluExecutionTime = (ReluEndTime - ReluStartTime); // Note-Tanjina: Keep in milliseconds, need to do the conversion later
-  s.relu_execution_time = ReluExecutionTime;
+  s.relu_execution_time = (s.relu_end_time - s.relu_start_time);
 
   for(int i = 0; i < power_readings.size(); ++i){
     uint64_t avgPower = power_readings[i].first;
     int64_t timestampPower = power_readings[i].second;
     double avgPowerUsage = avgPower / 1000000.0;
 
-    ReluTotalPowerConsumption += avgPower;
     s.relu_total_power_uw += avgPower;
-    std::cout << "Tanjina-Power usage values from the power_reading for Relu #" << Relu_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << ReluExecutionTime << " seconds" << " relu_coeff = " << size << std::endl; 
+    std::cout << "Tanjina-Power usage values from the power_reading for Relu #" << s.relu_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << s.relu_execution_time << " seconds" << " relu_coeff = " << size << std::endl;
 
     // std::vector<csv_column_type> relu_data;
     // relu_data.push_back(i);
@@ -1255,7 +1223,6 @@ void MaxPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
   auto cur_start = CURRENT_TIME;
   std::cout << "Current time of start for current maxpool = " << cur_start
             << std::endl;
-  MaxPoolStartTime = cur_start; // Added by Tanjina to calculate the duration/execution time
   s.maxpool_start_time = cur_start;
 #endif
 /** 
@@ -1264,7 +1231,6 @@ void MaxPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
 **/
 #ifdef LOG_LAYERWISE
   // MaxPool layer counter
-  MaxPool_layer_count++;
   s.maxpool_layer_count++;
 
   std::cout << "STARTING ENERGY MEASUREMENT" << std::endl;
@@ -1375,13 +1341,11 @@ void MaxPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
 
 #ifdef LOG_LAYERWISE
   auto temp = TIMER_TILL_NOW;
-  MaxpoolTimeInMilliSec += temp;
   s.maxpool_time_ms += temp;
   std::cout << "Time in sec for current maxpool = " << (temp / 1000.0)
             << std::endl;
   uint64_t curComm;
   FIND_ALL_IO_TILL_NOW(curComm);
-  MaxpoolCommSent += curComm;
   s.maxpool_comm_sent += curComm;
 #endif
 
@@ -1462,7 +1426,6 @@ void MaxPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
   auto cur_end = CURRENT_TIME;
   std::cout << "Current time of end for current maxpool = " << cur_end
             << std::endl;
-  MaxPoolEndTime = cur_end; // Added by Tanjina to calculate the duration/execution time
   s.maxpool_end_time = cur_end;
 #endif
 /** 
@@ -1471,18 +1434,15 @@ void MaxPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
 **/
 #ifdef LOG_LAYERWISE
   std::vector<std::pair<uint64_t, int64_t>> power_readings = measurement.stop();
-  // MaxPoolExecutionTime = (MaxPoolEndTime - MaxPoolStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
-  MaxPoolExecutionTime = (MaxPoolEndTime - MaxPoolStartTime); // Note-Tanjina: Keep in milliseconds, need to do the conversion later
-  s.maxpool_execution_time = MaxPoolExecutionTime;
+  s.maxpool_execution_time = (s.maxpool_end_time - s.maxpool_start_time);
   
   for(int i = 0; i < power_readings.size(); ++i){
     uint64_t avgPower = power_readings[i].first;
     int64_t timestampPower = power_readings[i].second;
     double avgPowerUsage = avgPower / 1000000.0;
 
-    MaxPoolTotalPowerConsumption += avgPower;
     s.maxpool_total_power_uw += avgPower;
-    std::cout << "Tanjina-Power usage values from the power_reading for MaxPool #" << MaxPool_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << MaxPoolExecutionTime << " seconds" << std::endl; 
+    std::cout << "Tanjina-Power usage values from the power_reading for MaxPool #" << s.maxpool_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << s.maxpool_execution_time << " seconds" << std::endl;
     // std::cout << "Tanjina-NN architecture info: " << "MaxPool_N = " << N << " MaxPool_H = " << H << " MaxPool_W = " << W << " MaxPool_C = " << C << " MaxPool_ksizeH = " << ksizeH << " MaxPool_ksizeW = " << ksizeW << " MaxPool_zPadHLeft = " << zPadHLeft << " MaxPool_zPadHRight = " << zPadHRight << " MaxPool_zPadWLeft = " << zPadWLeft  << " MaxPool_zPadWRight = " << zPadWRight << " MaxPool_strideH = " << strideH << " MaxPool_strideW = " << strideW << " MaxPool_N1 = " << N1 << " MaxPool_imgH = " << imgH << " MaxPool_imgW = " << imgW << " MaxPool_C1 = " << C1 << std::endl;
 
     // std::vector<csv_column_type> maxpool_data;
@@ -1542,7 +1502,6 @@ void AvgPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
   auto cur_start = CURRENT_TIME;
   std::cout << "Current time of start for current avgpool = " << cur_start
             << std::endl;
-  AvgPoolStartTime = cur_start; // Added by Tanjina to calculate the duration/execution time
   s.avgpool_start_time = cur_start;
 #endif
 /** 
@@ -1551,7 +1510,6 @@ void AvgPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
 **/
 #ifdef LOG_LAYERWISE
   // AvgPool layer counter
-  AvgPool_layer_count++;
   s.avgpool_layer_count++;
 
   std::cout << "STARTING ENERGY MEASUREMENT" << std::endl;
@@ -1656,13 +1614,11 @@ void AvgPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
 
 #ifdef LOG_LAYERWISE
   auto temp = TIMER_TILL_NOW;
-  AvgpoolTimeInMilliSec += temp;
   s.avgpool_time_ms += temp;
   std::cout << "Time in sec for current avgpool = " << (temp / 1000.0)
             << std::endl;
   uint64_t curComm;
   FIND_ALL_IO_TILL_NOW(curComm);
-  AvgpoolCommSent += curComm;
   s.avgpool_comm_sent += curComm;
 #endif
 
@@ -1741,7 +1697,6 @@ void AvgPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
   auto cur_end = CURRENT_TIME;
   std::cout << "Current time of end for current avgpool = " << cur_end
             << std::endl;
-  AvgPoolEndTime = cur_end; // Added by Tanjina to calculate the duration/execution time
   s.avgpool_end_time = cur_end;
 #endif
 /** 
@@ -1750,18 +1705,15 @@ void AvgPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
 **/
 #ifdef LOG_LAYERWISE
   std::vector<std::pair<uint64_t, int64_t>> power_readings = measurement.stop();
-  // AvgPoolExecutionTime = (AvgPoolEndTime - AvgPoolStartTime) / 1000.0; // Added by Tanjina to calculate the duration/execution time (Convert from milliseconds to seconds)
-  AvgPoolExecutionTime = (AvgPoolEndTime - AvgPoolStartTime); // Note-Tanjina: Keep in milliseconds, need to do the conversion later
-  s.avgpool_execution_time = AvgPoolExecutionTime;
+  s.avgpool_execution_time = (s.avgpool_end_time - s.avgpool_start_time);
   
   for(int i = 0; i < power_readings.size(); ++i){
     uint64_t avgPower = power_readings[i].first;
     int64_t timestampPower = power_readings[i].second;
     double avgPowerUsage = avgPower / 1000000.0;
 
-    AvgPoolTotalPowerConsumption += avgPower;
     s.avgpool_total_power_uw += avgPower;
-    std::cout << "Tanjina-Power usage values from the power_reading for AvgPool #" << AvgPool_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << AvgPoolExecutionTime << " seconds" << std::endl;
+    std::cout << "Tanjina-Power usage values from the power_reading for AvgPool #" << s.avgpool_layer_count << " : " << avgPowerUsage << " watts " << "Timestamp of the current power reading: " << timestampPower << " Execution time: " << s.avgpool_execution_time << " seconds" << std::endl;
   }       
 #endif
 
@@ -1809,11 +1761,9 @@ void ScaleDown(sci::Session &s, int32_t size, intType *inArr, int32_t sf) {
 
 #ifdef LOG_LAYERWISE
   auto temp = TIMER_TILL_NOW;
-  TruncationTimeInMilliSec += temp;
   s.truncation_time_ms += temp;
   uint64_t curComm;
   FIND_ALL_IO_TILL_NOW(curComm);
-  TruncationCommSent += curComm;
   s.truncation_comm_sent += curComm;
 #endif
 
@@ -2499,11 +2449,9 @@ void ElemWiseSecretSharedVectorMult(sci::Session &s, int32_t size,
 
 #ifdef LOG_LAYERWISE
   auto temp = TIMER_TILL_NOW;
-  BatchNormInMilliSec += temp;
   s.batch_norm_time_ms += temp;
   uint64_t curComm;
   FIND_ALL_IO_TILL_NOW(curComm);
-  BatchNormCommSent += curComm;
   s.batch_norm_comm_sent += curComm;
 #endif
 
