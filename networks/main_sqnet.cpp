@@ -3853,7 +3853,6 @@ void run_sqnet(std::istream &in, std::ostream &out) {
       }
     }
   }
-  finalize();
 }
 
 int main(int argc, char **argv) {

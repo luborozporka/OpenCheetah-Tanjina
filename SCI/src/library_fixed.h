@@ -55,12 +55,6 @@ inline std::vector<int> divide_instances(
   return chunks_per_thread;
 }
 
-void initialize();
-void initialize(sci::Session &s);
-
-void finalize();
-void finalize(sci::Session &s);
-
 void reconstruct(int dim, uint64_t *x, uint64_t *y, int bw_x);
 void reconstruct(sci::Session &s, int dim, uint64_t *x, uint64_t *y, int bw_x);
 

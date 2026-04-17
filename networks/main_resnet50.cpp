@@ -6415,8 +6415,6 @@ void run_resnet50(std::istream &in, std::ostream &out) {
 	  printf("predicted label=%lld\n", pred);
 	}
   }
-
-  finalize();
 }
 #undef gINPUT
 #undef gINPUTCLOSE
