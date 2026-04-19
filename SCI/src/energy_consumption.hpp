@@ -16,9 +16,12 @@
 #ifndef _ENERGY_CONSUMPTION_HPP
 #define _ENERGY_CONSUMPTION_HPP
 
+#include <cstdint>
 #include <string>
 #include <thread>
 #include <vector>
+
+#include "csv_writer.hpp"
 
 
 /* Represents a single measurement of energy in the background. */
@@ -86,5 +89,18 @@ public:
         swap(em1.measuring, em2.measuring);
     }
 };
+
+// Tanjina: hwmon sysfs path sampled by EnergyMeasurement
+// TODO: configure per cheetah-server host at startup
+extern std::string power_usage_path;
+
+// Tanjina: average power per layer reported in per-layer summaries
+double computeAveragePower(uint64_t totalPower, int layerCount,
+                           const std::string& layerName);
+
+// Tanjina: per-layer CSV for Conv layers (layer index, timestamps, avg power, geometry)
+extern std::string ConvOutputFile;
+extern std::vector<std::string> ConvHeaders;
+extern WriteToCSV writeConvCSV;
 
 #endif

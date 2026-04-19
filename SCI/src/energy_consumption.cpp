@@ -123,3 +123,27 @@ std::vector<std::pair<uint64_t, int64_t>> EnergyMeasurement::stop() {
     // OK, return it
     return res;
 }
+
+
+// Tanjina's layer-wise power instrumentation
+std::string power_usage_path = "/sys/class/hwmon/hwmon3/device/power1_average";
+
+double computeAveragePower(uint64_t totalPower, int layerCount,
+                           const std::string& layerName) {
+    if (layerCount != 0) {
+        // Convert from microwatts to watts
+        return (static_cast<double>(totalPower) / 1000000.0) / layerCount;
+    }
+    std::cerr << "Error: " << layerName
+              << " layer count is 0, can not divide by zero!" << std::endl;
+    return 0.0;
+}
+
+std::string ConvOutputFile = "Output/conv_output.csv";
+std::vector<std::string> ConvHeaders = {
+    "index", "layer_name", "layer_number", "timestamp_power_reading",
+    "avg_power_usage_mcW", "conv_start_timestamp", "conv_end_timestamp",
+    "execution_time_ms", "conv_N", "conv_H", "conv_W", "conv_CI",
+    "conv_FH", "conv_FW", "conv_CO", "conv_ zPadHLeft", "conv_zPadHRight",
+    "conv_zPadWLeft", "conv_zPadWRight", "conv_strideH", "conv_strideW"};
+WriteToCSV writeConvCSV(ConvOutputFile, ConvHeaders);

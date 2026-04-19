@@ -137,18 +137,6 @@ int MatMul_layer_count = 0;
 int AvgPool_layer_count = 0;
 int ArgMax_layer_count = 0;
 
-// Path to the power usage
-string power_usage_path = "/sys/class/hwmon/hwmon3/device/power1_average"; 
-
-// Added by Tanjina
-double computeAveragePower(uint64_t totalPower, int layerCount, const std::string& layerName){
-  if(layerCount != 0){
-    return (static_cast<double>(totalPower) / 1000000.0) / layerCount; // Convert from micro watts to watts
-  }else{
-    std::cerr << "Error: " << layerName << " layer count is 0, can not divide by zero!" << std::endl;
-    return 0.0;
-  }
-}
 /* for execution time/duration */
 uint64_t ConvStartTime = 0;
 uint64_t ConvEndTime = 0;
@@ -177,26 +165,6 @@ double AvgPoolExecutionTime = 0.0;
 uint64_t ArgMaxStartTime = 0;
 uint64_t ArgMaxEndTime = 0;
 double ArgMaxExecutionTime = 0.0;
-
-//std::string layerType = "Conv";
-std::string ConvOutputFile = "/home/tanjina/OpenCheetah-Tanjina/Output/conv_output.csv";
-std::vector<std::string> ConvHeaders = {"index", "layer_name", "layer_number", "timestamp_power_reading", "avg_power_usage_mcW", "conv_start_timestamp", "conv_end_timestamp", "execution_time_ms", "conv_N", "conv_H", "conv_W", "conv_CI", "conv_FH", "conv_FW", "conv_CO", "conv_ zPadHLeft", "conv_zPadHRight", "conv_zPadWLeft", "conv_zPadWRight", "conv_strideH", "conv_strideW"};
-WriteToCSV writeConvCSV(ConvOutputFile, ConvHeaders);
-
-//std::string layerType = "Relu";
-// std::string ReluOutputFile = "/home/tanjina/OpenCheetah-Tanjina/Output/relu_output.csv";
-// std::vector<std::string> ReluHeaders = {"index", "layer_name", "layer_number", "timestamp_power_reading", "avg_power_usage", "execution time", "relu_coeff"};
-// WriteToCSV writeReluCSV(ReluOutputFile, ReluHeaders);
-
-//std::string layerType = "MaxPool";
-// std::string MaxPoolOutputFile = "/home/tanjina/OpenCheetah-Tanjina/Output/maxpool_output.csv";
-// std::vector<std::string> MaxPoolHeaders = {"index", "layer_name", "layer_number", "timestamp_power_reading", "avg_power_usage", "execution time", "maxpool_N", "maxpool_H", "maxpool_W", "maxpool_C", "maxpool_ksizeH", "maxpool_ksizeW", "maxpool_zPadHLeft", "maxpool_zPadHRight", "maxpool_zPadWLeft", "maxpool_zPadWRight", "maxpool_strideH", "maxpool_strideW", "maxpool_N1", "maxpool_imgH", "maxpool_imgW", "maxpool_C1"};
-// WriteToCSV writeMaxPoolCSV(MaxPoolOutputFile, MaxPoolHeaders);
-
-//std::string layerType = "BatchNorm 1";
-// std::string BatchNorm1OutputFile = "/home/tanjina/OpenCheetah-Tanjina/Output/batchnorm1_output.csv";
-// std::vector<std::string> BatchNorm1Headers = {"index", "layer_name", "layer_number", "timestamp_power_reading", "avg_power_usage", "execution time", "BN1_C", "BN1_H", "BN1_W"};
-// WriteToCSV writeBatchNorm1CSV(BatchNorm1OutputFile, BatchNorm1Headers);
 
 /**
  * Added by Tanjina - ends

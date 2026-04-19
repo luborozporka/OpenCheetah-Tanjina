@@ -171,12 +171,6 @@ extern int MatMul_layer_count;
 extern int AvgPool_layer_count;
 extern int ArgMax_layer_count;
 
-// Path to the power usage
-extern string power_usage_path; 
-
-// Added by Tanjina
-double computeAveragePower(uint64_t totalPower, int layerCount, const std::string& layerName);
-
 /* for execution time/duration */
 extern uint64_t ConvStartTime;
 extern uint64_t ConvEndTime;
@@ -205,23 +199,6 @@ extern double AvgPoolExecutionTime;
 extern uint64_t ArgMaxStartTime;
 extern uint64_t ArgMaxEndTime;
 extern double ArgMaxExecutionTime;
-
-//extern std::string layerType;
-extern std::string ConvOutputFile;
-extern std::vector<std::string> ConvHeaders; 
-extern WriteToCSV writeConvCSV;
-
-// extern std::string ReluOutputFile;
-// extern std::vector<std::string> ReluHeaders; 
-// extern WriteToCSV writeReluCSV;
-
-// extern std::string MaxPoolOutputFile;
-// extern std::vector<std::string> MaxPoolHeaders; 
-// extern WriteToCSV writeMaxPoolCSV;
-
-// extern std::string BatchNorm1OutputFile;
-// extern std::vector<std::string> BatchNorm1Headers; 
-// extern WriteToCSV writeBatchNorm1CSV;
 
 /**
  * Added by Tanjina - ends
