@@ -1,13 +1,14 @@
 /*
 Session class for the Cheetah SNNI framework.
 
-Encapsulates the per-connection cryptographic, network, and profiling state
-that the forked Cheetah implementation currently keeps as file-scope globals
-in SCI/src/globals.{h,cpp}.
+Encapsulates the per-connection cryptographic, network, and profiling state.
+One Session per client connection in cheetah-server.
 */
 
 #ifndef SCI_SESSION_H__
 #define SCI_SESSION_H__
+
+#define MAX_THREADS 4
 
 #include "csv_writer.hpp"
 #include "defines.h"
@@ -73,9 +74,7 @@ class Session {
   // Releases every resource allocated by setup()
   void teardown();
 
-  // Accessors
-  // These are the handles that will replace direct references to the file-scope globals in SCI/src/globals.{h,cpp}
-
+  // Accessors for the per-session crypto/network handles
   NetIO* io() { return io_; }
   OTPack<NetIO>* otpack() { return otpack_; }
 
@@ -233,9 +232,7 @@ class Session {
   KKOT<NetIO>* kkot_ = nullptr;
   PRG128* prg128_ = nullptr;
 
-  // Per-worker-thread fan-out. Size fixed at MAX_THREADS (defined in
-  // globals.h) so that replacing the existing globals in later commits
-  // is a 1:1 swap with no size surprises
+  // Per-worker-thread fan-out. Size fixed at MAX_THREADS
   NetIO* io_arr_[MAX_THREADS] = {};
   OTPack<NetIO>* otpack_arr_[MAX_THREADS] = {};
   IKNP<NetIO>* ot_instance_arr_[MAX_THREADS] = {};
@@ -292,5 +289,10 @@ class Session {
 };
 
 }  // namespace sci
+
+#if USE_CHEETAH
+// Per-session toggle
+extern thread_local bool kIsSharedInput;
+#endif
 
 #endif  // SCI_SESSION_H__

@@ -23,7 +23,6 @@ SOFTWARE.
 #define CLEARTEXT_LIBRARY_FIXED_H__
 
 #include "defines.h"
-#include "globals.h"
 #include <cassert>
 #include <cmath>
 

@@ -1835,110 +1835,8 @@ void ScaleUp(sci::Session &s, int32_t size, intType *arr, int32_t sf) {
 }
 
 // Process-singleton session populated by StartComputation and torn down by EndComputation
+// TODO: change into per-connection ownership inside cheetah-server
 static sci::Session g_main_session;
-
-// Copies every pointer owned by s into the corresponding file-scope global declared in globals.cpp
-static void PublishSessionAliases(sci::Session& s) {
-  io = s.io();
-  otpack = s.otpack();
-  iknpOT = s.iknpOT();
-  iknpOTRoleReversed = s.iknpOTRoleReversed();
-  kkot = s.kkot();
-  prg128Instance = s.prg128();
-
-  relu = s.relu();
-  maxpool = s.maxpool();
-  argmax = s.argmax();
-
-  for (int i = 0; i < MAX_THREADS; i++) {
-    ioArr[i] = s.ioArr()[i];
-    otpackArr[i] = s.otpackArr()[i];
-    otInstanceArr[i] = s.otInstanceArr()[i];
-    kkotInstanceArr[i] = s.kkotInstanceArr()[i];
-    prgInstanceArr[i] = s.prgInstanceArr()[i];
-    reluArr[i] = s.reluArr()[i];
-    maxpoolArr[i] = s.maxpoolArr()[i];
-  }
-
-#ifdef SCI_OT
-  mult = s.mult();
-  aux = s.aux();
-  truncation = s.truncation();
-  xt = s.xt();
-  math = s.math();
-  multUniform = s.multUniform();
-  for (int i = 0; i < MAX_THREADS; i++) {
-    multArr[i] = s.multArr()[i];
-    auxArr[i] = s.auxArr()[i];
-    truncationArr[i] = s.truncationArr()[i];
-    xtArr[i] = s.xtArr()[i];
-    mathArr[i] = s.mathArr()[i];
-    multUniformArr[i] = s.multUniformArr()[i];
-  }
-#endif
-
-#ifdef SCI_HE
-  he_fc = s.he_fc();
-  he_prod = s.he_prod();
-#endif
-
-#if USE_CHEETAH
-  cheetah_linear = s.cheetah_linear();
-#elif defined(SCI_HE)
-  he_conv = s.he_conv();
-#endif
-}
-
-static void ClearSessionAliases() {
-  io = nullptr;
-  otpack = nullptr;
-  iknpOT = nullptr;
-  iknpOTRoleReversed = nullptr;
-  kkot = nullptr;
-  prg128Instance = nullptr;
-
-  relu = nullptr;
-  maxpool = nullptr;
-  argmax = nullptr;
-
-  for (int i = 0; i < MAX_THREADS; i++) {
-    ioArr[i] = nullptr;
-    otpackArr[i] = nullptr;
-    otInstanceArr[i] = nullptr;
-    kkotInstanceArr[i] = nullptr;
-    prgInstanceArr[i] = nullptr;
-    reluArr[i] = nullptr;
-    maxpoolArr[i] = nullptr;
-  }
-
-#ifdef SCI_OT
-  mult = nullptr;
-  aux = nullptr;
-  truncation = nullptr;
-  xt = nullptr;
-  math = nullptr;
-  multUniform = nullptr;
-  for (int i = 0; i < MAX_THREADS; i++) {
-    multArr[i] = nullptr;
-    auxArr[i] = nullptr;
-    truncationArr[i] = nullptr;
-    xtArr[i] = nullptr;
-    mathArr[i] = nullptr;
-    multUniformArr[i] = nullptr;
-  }
-#endif
-
-#ifdef SCI_HE
-  he_fc = nullptr;
-  he_prod = nullptr;
-#endif
-
-#if USE_CHEETAH
-  cheetah_linear = nullptr;
-#elif defined(SCI_HE)
-  he_conv = nullptr;
-#endif
-}
 
 void StartComputation() {
   assert(bitlength < 64 && bitlength > 0);
@@ -1972,7 +1870,6 @@ void StartComputation() {
   printf("Doing BaseOT ...\n");
 
   g_main_session.setup(party, port, address, num_threads, bitlength, kScale);
-  PublishSessionAliases(g_main_session);
   sci::SetCurrentSession(&g_main_session);
 
 #if USE_CHEETAH
@@ -1987,19 +1884,16 @@ void StartComputation() {
   g_main_session.start_base_ot();
 
   std::cout << "After one-time setup, communication" << std::endl;
-  start_time = std::chrono::high_resolution_clock::now();
-  g_main_session.start_time() = start_time;
+  g_main_session.start_time() = std::chrono::high_resolution_clock::now();
   for (int i = 0; i < num_threads; i++) {
-    auto temp = ioArr[i]->counter;
-    comm_threads[i] = temp;
+    auto temp = g_main_session.ioArr()[i]->counter;
     g_main_session.comm_threads(i) = temp;
     std::cout << "Thread i = " << i << ", total data sent till now = " << temp
               << std::endl;
   }
   std::cout << "-----------Syncronizing-----------" << std::endl;
-  io->sync();
-  num_rounds = io->num_rounds;
-  g_main_session.num_rounds() = num_rounds;
+  g_main_session.io()->sync();
+  g_main_session.num_rounds() = g_main_session.io()->num_rounds;
   std::cout << "secret_share_mod: " << prime_mod << " bitlength: " << bitlength << std::endl;
   std::cout << "backend: " << backend << std::endl;
   std::cout << "-----------Syncronized - now starting execution-----------"
@@ -2315,7 +2209,6 @@ void EndComputation() {
 #endif
 
   sci::SetCurrentSession(nullptr);
-  ClearSessionAliases();
   g_main_session.teardown();
 }
 

@@ -6,15 +6,18 @@ The body intentionally mirrors StartComputation() / EndComputation() in library_
 
 #include "session.h"
 
-#include "globals.h"
-
 #include <cassert>
 #include <cstdio>
+
+#if USE_CHEETAH
+thread_local bool kIsSharedInput = false;
+#endif
 
 namespace sci {
 
 namespace {
-Session* g_current_session = nullptr;
+// thread_local so each worker thread in cheetah-server has its own session
+thread_local Session* g_current_session = nullptr;
 }  // namespace
 
 Session* CurrentSession() { return g_current_session; }

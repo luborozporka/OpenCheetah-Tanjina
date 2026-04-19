@@ -22,7 +22,6 @@ SOFTWARE.
 #ifndef FUNCTIONALITIES_UNIFORM_H__
 #define FUNCTIONALITIES_UNIFORM_H__
 
-#include "globals.h"
 #include "library_fixed_uniform.h"
 #include "session.h"
 #include <cmath>

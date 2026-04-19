@@ -6,7 +6,6 @@
 
 #include "cheetah/cheetah-api.h"
 #include "defines_uniform.h"
-#include "globals.h"
 #include "library_fixed_uniform.h"
 #include "session.h"
 #include "energy_consumption.hpp"
