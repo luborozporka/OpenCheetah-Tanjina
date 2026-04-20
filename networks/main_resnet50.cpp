@@ -18,6 +18,11 @@ int num_threads = 4;
 int32_t bitlength = 41;
 int32_t kScale = 12;
 #endif
+
+#ifdef CHEETAH_SERVER_BUILD
+namespace {
+#endif
+
 int32_t kDoExtractTruncate = 1;
 
 int64_t getSignValue(uint64_t x) {
@@ -1798,6 +1803,10 @@ void FusedBN(int32_t N, int32_t H, int32_t W, int32_t CI, int32_t fh,
   }
   ClearMemSecret1(CO * CI * fh * fw, scaled_filters);
 }
+
+#ifdef CHEETAH_SERVER_BUILD
+}  // namespace
+#endif
 
 // gINPUT is redirected to the in param so cheetah-server can feed per-client socket streams
 #define gINPUT in

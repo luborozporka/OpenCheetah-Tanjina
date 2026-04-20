@@ -16,6 +16,10 @@ int32_t bitlength = 32;
 int32_t kScale = 12;
 #endif
 
+#ifdef CHEETAH_SERVER_BUILD
+namespace {
+#endif
+
 void MatAddBroadCast2(int64_t s1, int64_t s2, uint64_t *A, uint64_t *B,
                       uint64_t *outArr) {
   for (uint64_t i1 = (int32_t)0; i1 < s1; i1++) {
@@ -2262,6 +2266,10 @@ void ScaleDown4(int64_t s1, int64_t s2, int64_t s3, int64_t s4, uint64_t *arr,
   }
   ClearMemSecret1(size, reshapedArr);
 }
+
+#ifdef CHEETAH_SERVER_BUILD
+}  // namespace
+#endif
 
 // Entry point for running one SqueezeNet inference
 void run_sqnet(std::istream &in, std::ostream &out) {
