@@ -1834,13 +1834,16 @@ void ScaleUp(sci::Session &s, int32_t size, intType *arr, int32_t sf) {
   }
 }
 
-// Process-singleton session populated by StartComputation and torn down by EndComputation
-// TODO: change into per-connection ownership inside cheetah-server
-static sci::Session g_main_session;
+// one session per worker thread
+static thread_local sci::Session g_main_session;
 
 void StartComputation() {
+  // cheetah-server workers publish per-thread port / num_threads
+  const int eff_port = sci::port_override > 0 ? sci::port_override : port;
+  const int eff_num_threads = sci::num_threads_override > 0 ? sci::num_threads_override : num_threads;
+
   assert(bitlength < 64 && bitlength > 0);
-  assert(num_threads <= MAX_THREADS);
+  assert(eff_num_threads <= MAX_THREADS);
 
   std::string backend;
 
@@ -1869,7 +1872,7 @@ void StartComputation() {
   checkIfUsingEigen();
   printf("Doing BaseOT ...\n");
 
-  g_main_session.setup(party, port, address, num_threads, bitlength, kScale);
+  g_main_session.setup(party, eff_port, address, eff_num_threads, bitlength, kScale);
   sci::SetCurrentSession(&g_main_session);
 
 #if USE_CHEETAH
@@ -1885,7 +1888,7 @@ void StartComputation() {
 
   std::cout << "After one-time setup, communication" << std::endl;
   g_main_session.start_time() = std::chrono::high_resolution_clock::now();
-  for (int i = 0; i < num_threads; i++) {
+  for (int i = 0; i < eff_num_threads; i++) {
     auto temp = g_main_session.ioArr()[i]->counter;
     g_main_session.comm_threads(i) = temp;
     std::cout << "Thread i = " << i << ", total data sent till now = " << temp
@@ -1911,7 +1914,8 @@ void EndComputation() {
                                                             s.start_time())
           .count();
   uint64_t totalComm = 0;
-  for (int i = 0; i < num_threads; i++) {
+  const int nt = s.num_threads_value();
+  for (int i = 0; i < nt; i++) {
     auto temp = s.ioArr()[i]->counter;
     std::cout << "Thread i = " << i << ", total data sent till now = " << temp
               << std::endl;
@@ -2164,7 +2168,7 @@ void EndComputation() {
              << std::endl;
     }
     result << (isNativeRing ? "Ring" : "Field") << "," << bitlength << ","
-           << MILL_PARAM << "," << num_threads << ","
+           << MILL_PARAM << "," << nt << ","
            << execTimeInMilliSec / 1000.0 << ","
            << (totalComm + totalCommClient) / (1.0 * (1ULL << 20)) << ","
            << s.conv_time_ms / 1000.0 << ","

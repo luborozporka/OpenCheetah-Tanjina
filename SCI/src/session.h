@@ -288,6 +288,9 @@ class Session {
   bool initialised_ = false;
 };
 
+extern thread_local int port_override;
+extern thread_local int num_threads_override;
+
 }  // namespace sci
 
 #if USE_CHEETAH

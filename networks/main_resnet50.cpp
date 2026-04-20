@@ -10,12 +10,14 @@
 using namespace std;
 #define USE_FUSED_BN 1
 
+#ifndef CHEETAH_SERVER_BUILD
 int party = 0;
 int port = 32000;
 string address = "127.0.0.1";
 int num_threads = 4;
 int32_t bitlength = 41;
 int32_t kScale = 12;
+#endif
 int32_t kDoExtractTruncate = 1;
 
 int64_t getSignValue(uint64_t x) {
@@ -6419,6 +6421,7 @@ void run_resnet50(std::istream &in, std::ostream &out) {
 #undef gINPUT
 #undef gINPUTCLOSE
 
+#ifndef CHEETAH_SERVER_BUILD
 int main(int argc, char **argv) {
   ArgMapping amap;
 
@@ -6433,3 +6436,4 @@ int main(int argc, char **argv) {
   run_resnet50(std::cin, std::cout);
   return 0;
 }
+#endif

@@ -7,12 +7,14 @@ Then hand crafted by Wen-jie Lu
 #include <iostream>
 using namespace std;
 
+#ifndef CHEETAH_SERVER_BUILD
 int party = 0;
 int port = 32000;
 string address = "127.0.0.1";
 int num_threads = 4;
 int32_t bitlength = 32;
 int32_t kScale = 12;
+#endif
 
 void MatAddBroadCast2(int64_t s1, int64_t s2, uint64_t *A, uint64_t *B,
                       uint64_t *outArr) {
@@ -3855,6 +3857,7 @@ void run_sqnet(std::istream &in, std::ostream &out) {
   }
 }
 
+#ifndef CHEETAH_SERVER_BUILD
 int main(int argc, char **argv) {
   ArgMapping amap;
 
@@ -3870,3 +3873,4 @@ int main(int argc, char **argv) {
   run_sqnet(std::cin, std::cout);
   return 0;
 }
+#endif

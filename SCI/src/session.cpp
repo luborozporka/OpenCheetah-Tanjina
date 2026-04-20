@@ -20,6 +20,9 @@ namespace {
 thread_local Session* g_current_session = nullptr;
 }  // namespace
 
+thread_local int port_override = 0;
+thread_local int num_threads_override = 0;
+
 Session* CurrentSession() { return g_current_session; }
 
 void SetCurrentSession(Session* s) { g_current_session = s; }
