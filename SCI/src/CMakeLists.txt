@@ -38,7 +38,7 @@ target_compile_definitions(SCI-HE PUBLIC SCI_HE=1 SCI_CHEETAH=0)
 
 # Cheetah releated
 add_subdirectory(cheetah)
-add_library(SCI-Cheetah library_fixed_uniform_cheetah.cpp library_fixed_uniform.cpp session.cpp cleartext_library_fixed.cpp energy_consumption.cpp csv_writer.cpp)
+add_library(SCI-Cheetah library_fixed_uniform_cheetah.cpp library_fixed_uniform.cpp session.cpp port_allocator.cpp cleartext_library_fixed.cpp energy_consumption.cpp csv_writer.cpp)
 target_link_libraries(SCI-Cheetah PUBLIC SCI-common Cheetah-Linear SCI-Cheetah-BuildingBlocks SCI-Math Eigen3::Eigen)
 target_compile_definitions(SCI-Cheetah PUBLIC SCI_OT=1 USE_CHEETAH=1)
 
