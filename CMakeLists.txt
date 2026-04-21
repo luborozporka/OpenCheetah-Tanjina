@@ -58,8 +58,16 @@ add_executable(cheetah-server
   networks/main_sqnet.cpp
   networks/main_resnet50.cpp)
 target_compile_definitions(cheetah-server
-  PUBLIC SCI_OT=1 USE_CHEETAH=1 CHEETAH_SERVER_BUILD=1)
+  PUBLIC SCI_OT=1 USE_CHEETAH=1 CHEETAH_EMBEDDED_BUILD=1)
 target_link_libraries(cheetah-server gemini SCI-Cheetah Boost::system Threads::Threads)
+
+add_executable(cheetah-client
+  client/cheetah-client.cpp
+  networks/main_sqnet.cpp
+  networks/main_resnet50.cpp)
+target_compile_definitions(cheetah-client
+  PUBLIC SCI_OT=1 USE_CHEETAH=1 CHEETAH_EMBEDDED_BUILD=1)
+target_link_libraries(cheetah-client gemini SCI-Cheetah Boost::system Threads::Threads)
 add_network_cheetah(short1)
 add_network_cheetah(short2)
 add_network_cheetah(relu1_28_28_1)

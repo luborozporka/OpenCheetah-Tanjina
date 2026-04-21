@@ -7,7 +7,7 @@ Then hand crafted by Wen-jie Lu
 #include <iostream>
 using namespace std;
 
-#ifndef CHEETAH_SERVER_BUILD
+#ifndef CHEETAH_EMBEDDED_BUILD
 int party = 0;
 int port = 32000;
 string address = "127.0.0.1";
@@ -16,7 +16,7 @@ int32_t bitlength = 32;
 int32_t kScale = 12;
 #endif
 
-#ifdef CHEETAH_SERVER_BUILD
+#ifdef CHEETAH_EMBEDDED_BUILD
 namespace {
 #endif
 
@@ -2267,7 +2267,7 @@ void ScaleDown4(int64_t s1, int64_t s2, int64_t s3, int64_t s4, uint64_t *arr,
   ClearMemSecret1(size, reshapedArr);
 }
 
-#ifdef CHEETAH_SERVER_BUILD
+#ifdef CHEETAH_EMBEDDED_BUILD
 }  // namespace
 #endif
 
@@ -3865,7 +3865,7 @@ void run_sqnet(std::istream &in, std::ostream &out) {
   }
 }
 
-#ifndef CHEETAH_SERVER_BUILD
+#ifndef CHEETAH_EMBEDDED_BUILD
 int main(int argc, char **argv) {
   ArgMapping amap;
 

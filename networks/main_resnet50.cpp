@@ -10,7 +10,7 @@
 using namespace std;
 #define USE_FUSED_BN 1
 
-#ifndef CHEETAH_SERVER_BUILD
+#ifndef CHEETAH_EMBEDDED_BUILD
 int party = 0;
 int port = 32000;
 string address = "127.0.0.1";
@@ -19,7 +19,7 @@ int32_t bitlength = 41;
 int32_t kScale = 12;
 #endif
 
-#ifdef CHEETAH_SERVER_BUILD
+#ifdef CHEETAH_EMBEDDED_BUILD
 namespace {
 #endif
 
@@ -1804,7 +1804,7 @@ void FusedBN(int32_t N, int32_t H, int32_t W, int32_t CI, int32_t fh,
   ClearMemSecret1(CO * CI * fh * fw, scaled_filters);
 }
 
-#ifdef CHEETAH_SERVER_BUILD
+#ifdef CHEETAH_EMBEDDED_BUILD
 }  // namespace
 #endif
 
@@ -6430,7 +6430,7 @@ void run_resnet50(std::istream &in, std::ostream &out) {
 #undef gINPUT
 #undef gINPUTCLOSE
 
-#ifndef CHEETAH_SERVER_BUILD
+#ifndef CHEETAH_EMBEDDED_BUILD
 int main(int argc, char **argv) {
   ArgMapping amap;
 
