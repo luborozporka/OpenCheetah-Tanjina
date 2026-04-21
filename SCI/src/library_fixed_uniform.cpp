@@ -1855,6 +1855,7 @@ void StartComputation() {
     tag << "pid" << getpid() << "-port" << eff_port;
     g_main_session.session_tag = tag.str();
   }
+  g_main_session.idle_power_w = sci::host_idle_power_w.load();
 
   assert(bitlength < 64 && bitlength > 0);
   assert(eff_num_threads <= MAX_THREADS);
@@ -2251,13 +2252,13 @@ void EndComputation() {
     if (csv.is_open()) {
       if (write_header) {
         csv << "pid,session_tag,party,num_threads,bitlength,wall_time_ms,"
-               "total_comm_bytes,total_energy_uj,avg_power_w\n";
+               "total_comm_bytes,total_energy_uj,avg_power_w,idle_power_w\n";
       }
       csv << getpid() << "," << s.session_tag << ","
           << (party == SERVER ? "SERVER" : "CLIENT") << ","
           << s.num_threads_value() << "," << s.bitlength_value() << ","
           << s.wall_time_ms << "," << totalComm << "," << s.total_energy_uj
-          << "," << s.avg_power_w << "\n";
+          << "," << s.avg_power_w << "," << s.idle_power_w << "\n";
     } else {
       std::cerr << "[session] cannot open " << csv_path
                 << " for append; metrics not persisted" << std::endl;

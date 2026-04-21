@@ -3,6 +3,7 @@
 // Accepts TCP connections on a control port, negotiates a private data-port
 // range per client, and runs the chosen network in a dedicated worker thread
 
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>
@@ -12,9 +13,12 @@
 #include <thread>
 #include <utility>
 
+#include <unistd.h>
+
 #include <boost/asio.hpp>
 
 #include "defines.h"
+#include "energy_consumption.hpp"
 #include "port_allocator.h"
 #include "session.h"
 #include "utils/ArgMapping/ArgMapping.h"
@@ -50,8 +54,37 @@ struct ServerConfig {
   int num_threads_per_session = 4;
   int bitlength = 32;
   int kscale = 12;
+  int idle_ms = 2000;
   NetworkId net = NetworkId::kSqnet;  // resolved from net_name after parsing
 };
+
+std::string hostname_str() {
+  char buf[256] = {0};
+  if (gethostname(buf, sizeof(buf) - 1) != 0) return "unknown";
+  return std::string(buf);
+}
+
+// Appends one row to Output/idle.csv with the host idle baseline
+void persist_idle_row(const std::string& role, double idle_w, size_t samples,
+                      int64_t effective_ms, int requested_ms) {
+  const std::string path = "Output/idle.csv";
+  const bool write_header = !std::ifstream(path.c_str()).good();
+  std::ofstream f(path, std::ios::out | std::ios::app);
+  if (!f.is_open()) {
+    std::cerr << "[idle] cannot open " << path << " for append\n";
+    return;
+  }
+  if (write_header) {
+    f << "epoch_s,host,role,idle_power_w,samples,effective_duration_ms,"
+         "requested_duration_ms\n";
+  }
+  const int64_t epoch_s =
+      std::chrono::duration_cast<std::chrono::seconds>(
+          std::chrono::system_clock::now().time_since_epoch())
+          .count();
+  f << epoch_s << "," << hostname_str() << "," << role << "," << idle_w << ","
+    << samples << "," << effective_ms << "," << requested_ms << "\n";
+}
 
 void write_u32(tcp::socket& sock, uint32_t v) {
   asio::write(sock, asio::buffer(&v, sizeof(v)));
@@ -142,6 +175,8 @@ int main(int argc, char** argv) {
   amap.arg("num_threads", cfg.num_threads_per_session, "Threads per session (must be <= MAX_THREADS)");
   amap.arg("bitlength", cfg.bitlength, "Ring bitlength (sqnet=32, resnet50=41)");
   amap.arg("kscale", cfg.kscale, "Fixed-point scale");
+  amap.arg("idle_ms", cfg.idle_ms,
+           "Idle-baseline sampling window in ms (0 = skip)");
   amap.parse(argc, argv);
 
   if (cfg.net_name == "sqnet") cfg.net = NetworkId::kSqnet;
@@ -169,6 +204,19 @@ int main(int argc, char** argv) {
   num_threads = cfg.num_threads_per_session;
   bitlength = cfg.bitlength;
   kScale = cfg.kscale;
+
+  if (cfg.idle_ms > 0) {
+    size_t samples = 0;
+    int64_t effective_ms = 0;
+    std::cerr << "[cheetah-server] sampling idle power for " << cfg.idle_ms
+              << "ms from " << power_usage_path << "\n";
+    const double idle_w = measure_idle_power_w(power_usage_path, cfg.idle_ms,
+                                               &samples, &effective_ms);
+    sci::host_idle_power_w.store(idle_w);
+    persist_idle_row("SERVER", idle_w, samples, effective_ms, cfg.idle_ms);
+    std::cerr << "[cheetah-server] idle_power=" << idle_w << "W over "
+              << samples << " samples / " << effective_ms << "ms\n";
+  }
 
   sci::PortRangeAllocator alloc(cfg.data_port_base,
                                 cfg.num_threads_per_session, cfg.max_clients);

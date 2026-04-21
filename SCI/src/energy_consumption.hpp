@@ -101,6 +101,11 @@ double computeAveragePower(uint64_t totalPower, int layerCount,
 // Estimates total energy used from a series of power readings
 uint64_t integrate_energy_uj(const std::vector<std::pair<uint64_t, int64_t>>& samples);
 
+// Intended to capture a host idle baseline mean power in watts before a benchmark run
+double measure_idle_power_w(const std::string& hwmon_path, int duration_ms,
+                            size_t* samples_out = nullptr,
+                            int64_t* effective_duration_ms_out = nullptr);
+
 // Tanjina: per-layer CSV for Conv layers (layer index, timestamps, avg power, geometry)
 extern std::string ConvOutputFile;
 extern std::vector<std::string> ConvHeaders;

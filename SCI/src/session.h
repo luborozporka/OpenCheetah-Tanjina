@@ -17,6 +17,7 @@ One Session per client connection in cheetah-server.
 #include "NonLinear/maxpool.h"
 #include "NonLinear/relu-interface.h"
 #include "OT/kkot.h"
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <string>
@@ -227,6 +228,8 @@ class Session {
   uint64_t wall_time_ms = 0;
   uint64_t total_energy_uj = 0;
   double avg_power_w = 0.0;
+  // Host idle baseline at the startup
+  double idle_power_w = 0.0;
   // "pid<PID>-port<PORT>"
   std::string session_tag;
 
@@ -297,6 +300,9 @@ class Session {
 
 extern thread_local int port_override;
 extern thread_local int num_threads_override;
+
+// Host idle-power baseline in watts
+extern std::atomic<double> host_idle_power_w;
 
 }  // namespace sci
 

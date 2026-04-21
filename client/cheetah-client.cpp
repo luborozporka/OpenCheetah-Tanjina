@@ -3,15 +3,19 @@
 // Handshakes with cheetah-server on a control port, receives a private
 // data-port range, then runs the chosen network as client against those ports
 
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <string>
 
+#include <unistd.h>
+
 #include <boost/asio.hpp>
 
 #include "defines.h"
+#include "energy_consumption.hpp"
 #include "session.h"
 #include "utils/ArgMapping/ArgMapping.h"
 
@@ -42,8 +46,36 @@ struct ClientConfig {
   std::string image_path;
   int bitlength = 32;
   int kscale = 12;
+  int idle_ms = 2000;
   NetworkId net = NetworkId::kSqnet;
 };
+
+std::string hostname_str() {
+  char buf[256] = {0};
+  if (gethostname(buf, sizeof(buf) - 1) != 0) return "unknown";
+  return std::string(buf);
+}
+
+void persist_idle_row(const std::string& role, double idle_w, size_t samples,
+                      int64_t effective_ms, int requested_ms) {
+  const std::string path = "Output/idle.csv";
+  const bool write_header = !std::ifstream(path.c_str()).good();
+  std::ofstream f(path, std::ios::out | std::ios::app);
+  if (!f.is_open()) {
+    std::cerr << "[idle] cannot open " << path << " for append\n";
+    return;
+  }
+  if (write_header) {
+    f << "epoch_s,host,role,idle_power_w,samples,effective_duration_ms,"
+         "requested_duration_ms\n";
+  }
+  const int64_t epoch_s =
+      std::chrono::duration_cast<std::chrono::seconds>(
+          std::chrono::system_clock::now().time_since_epoch())
+          .count();
+  f << epoch_s << "," << hostname_str() << "," << role << "," << idle_w << ","
+    << samples << "," << effective_ms << "," << requested_ms << "\n";
+}
 
 bool do_handshake(tcp::socket& sock, NetworkId net, uint32_t* base_port,
                   uint32_t* num_threads_out) {
@@ -74,6 +106,7 @@ int main(int argc, char** argv) {
   amap.arg("image", cfg.image_path, "Path to input image file (required)");
   amap.arg("bitlength", cfg.bitlength, "Ring bitlength (must match server; sqnet=32, resnet50=41)");
   amap.arg("kscale", cfg.kscale, "Fixed-point scale (must match server)");
+  amap.arg("idle_ms", cfg.idle_ms, "Idle-baseline sampling window in ms (0 = skip)");
   amap.parse(argc, argv);
 
   if (cfg.net_name == "sqnet") cfg.net = NetworkId::kSqnet;
@@ -92,6 +125,20 @@ int main(int argc, char** argv) {
   if (!image.is_open()) {
     std::cerr << "[cheetah-client] cannot open image: " << cfg.image_path << "\n";
     return 1;
+  }
+
+  // Host idle baseline before any crypto work
+  if (cfg.idle_ms > 0) {
+    size_t samples = 0;
+    int64_t effective_ms = 0;
+    std::cerr << "[cheetah-client] sampling idle power for " << cfg.idle_ms
+              << "ms from " << power_usage_path << "\n";
+    const double idle_w = measure_idle_power_w(power_usage_path, cfg.idle_ms,
+                                               &samples, &effective_ms);
+    sci::host_idle_power_w.store(idle_w);
+    persist_idle_row("CLIENT", idle_w, samples, effective_ms, cfg.idle_ms);
+    std::cerr << "[cheetah-client] idle_power=" << idle_w << "W over "
+              << samples << " samples / " << effective_ms << "ms\n";
   }
 
   asio::io_context io;

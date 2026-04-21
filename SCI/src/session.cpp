@@ -22,6 +22,7 @@ thread_local Session* g_current_session = nullptr;
 
 thread_local int port_override = 0;
 thread_local int num_threads_override = 0;
+std::atomic<double> host_idle_power_w{0.0};
 
 Session* CurrentSession() { return g_current_session; }
 

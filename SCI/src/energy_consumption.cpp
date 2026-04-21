@@ -155,6 +155,24 @@ uint64_t integrate_energy_uj(
     return static_cast<uint64_t>(energy_nj / 1000.0);
 }
 
+double measure_idle_power_w(const std::string& hwmon_path, int duration_ms, size_t* samples_out, int64_t* effective_duration_ms_out) {
+    if (duration_ms <= 0) return 0.0;
+    EnergyMeasurement em(hwmon_path);
+    std::this_thread::sleep_for(std::chrono::milliseconds(duration_ms));
+    auto samples = em.stop();
+    if (samples_out) *samples_out = samples.size();
+    if (effective_duration_ms_out) {
+        *effective_duration_ms_out = samples.size() >= 2
+            ? samples.back().second - samples.front().second
+            : 0;
+    }
+    if (samples.empty()) return 0.0;
+    long double sum_uw = 0.0L;
+    for (const auto& s : samples) sum_uw += static_cast<long double>(s.first);
+    const long double mean_uw = sum_uw / static_cast<long double>(samples.size());
+    return static_cast<double>(mean_uw / 1.0e6L);
+}
+
 std::string ConvOutputFile = "Output/conv_output.csv";
 std::vector<std::string> ConvHeaders = {
     "index", "layer_name", "layer_number", "timestamp_power_reading",
