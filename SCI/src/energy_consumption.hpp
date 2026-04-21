@@ -98,6 +98,9 @@ extern std::string power_usage_path;
 double computeAveragePower(uint64_t totalPower, int layerCount,
                            const std::string& layerName);
 
+// Estimates total energy used from a series of power readings
+uint64_t integrate_energy_uj(const std::vector<std::pair<uint64_t, int64_t>>& samples);
+
 // Tanjina: per-layer CSV for Conv layers (layer index, timestamps, avg power, geometry)
 extern std::string ConvOutputFile;
 extern std::vector<std::string> ConvHeaders;

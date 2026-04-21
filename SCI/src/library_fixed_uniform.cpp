@@ -30,6 +30,11 @@ SOFTWARE.
 #include "energy_consumption.hpp"
 #include "csv_writer.hpp" // Added by Tanjina for writing the measurement values into a csv file
 
+#include <fstream>
+#include <memory>
+#include <sstream>
+#include <unistd.h>
+
 #define LOG_LAYERWISE
 #define VERIFY_LAYERWISE
 #undef VERIFY_LAYERWISE // undefine this to turn OFF the verifcation
@@ -1836,11 +1841,20 @@ void ScaleUp(sci::Session &s, int32_t size, intType *arr, int32_t sf) {
 
 // one session per worker thread
 static thread_local sci::Session g_main_session;
+// Per-session hwmon sampler
+static thread_local std::unique_ptr<EnergyMeasurement> g_session_energy;
 
 void StartComputation() {
   // cheetah-server workers publish per-thread port / num_threads
   const int eff_port = sci::port_override > 0 ? sci::port_override : port;
   const int eff_num_threads = sci::num_threads_override > 0 ? sci::num_threads_override : num_threads;
+
+  // pid-port pair is unique
+  {
+    std::ostringstream tag;
+    tag << "pid" << getpid() << "-port" << eff_port;
+    g_main_session.session_tag = tag.str();
+  }
 
   assert(bitlength < 64 && bitlength > 0);
   assert(eff_num_threads <= MAX_THREADS);
@@ -1887,6 +1901,8 @@ void StartComputation() {
   g_main_session.start_base_ot();
 
   std::cout << "After one-time setup, communication" << std::endl;
+  // hwmon sampler runs alongside the inference
+  g_session_energy = std::make_unique<EnergyMeasurement>(power_usage_path);
   g_main_session.start_time() = std::chrono::high_resolution_clock::now();
   for (int i = 0; i < eff_num_threads; i++) {
     auto temp = g_main_session.ioArr()[i]->counter;
@@ -1913,6 +1929,21 @@ void EndComputation() {
       std::chrono::duration_cast<std::chrono::milliseconds>(endTimer -
                                                             s.start_time())
           .count();
+
+  // Stop the hwmon sampler and integrate energy before the post-inference
+  // comm exchange so we only attribute the inference window
+  std::vector<std::pair<uint64_t, int64_t>> energy_samples;
+  if (g_session_energy) {
+    energy_samples = g_session_energy->stop();
+    g_session_energy.reset();
+  }
+  s.wall_time_ms = static_cast<uint64_t>(execTimeInMilliSec);
+  s.total_energy_uj = integrate_energy_uj(energy_samples);
+  s.avg_power_w =
+      s.wall_time_ms > 0
+          ? static_cast<double>(s.total_energy_uj) /
+                (1000.0 * static_cast<double>(s.wall_time_ms))
+          : 0.0;
   uint64_t totalComm = 0;
   const int nt = s.num_threads_value();
   for (int i = 0; i < nt; i++) {
@@ -2211,6 +2242,27 @@ void EndComputation() {
     s.io()->send_data(&s.normalise_l2_comm_sent, sizeof(uint64_t));
   }
 #endif
+
+  // Per-session summary row
+  {
+    const std::string csv_path = "Output/session-" + s.session_tag + ".csv";
+    const bool write_header = !std::ifstream(csv_path.c_str()).good();
+    std::ofstream csv(csv_path, std::ios::out | std::ios::app);
+    if (csv.is_open()) {
+      if (write_header) {
+        csv << "pid,session_tag,party,num_threads,bitlength,wall_time_ms,"
+               "total_comm_bytes,total_energy_uj,avg_power_w\n";
+      }
+      csv << getpid() << "," << s.session_tag << ","
+          << (party == SERVER ? "SERVER" : "CLIENT") << ","
+          << s.num_threads_value() << "," << s.bitlength_value() << ","
+          << s.wall_time_ms << "," << totalComm << "," << s.total_energy_uj
+          << "," << s.avg_power_w << "\n";
+    } else {
+      std::cerr << "[session] cannot open " << csv_path
+                << " for append; metrics not persisted" << std::endl;
+    }
+  }
 
   sci::SetCurrentSession(nullptr);
   g_main_session.teardown();

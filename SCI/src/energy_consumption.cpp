@@ -139,6 +139,22 @@ double computeAveragePower(uint64_t totalPower, int layerCount,
     return 0.0;
 }
 
+uint64_t integrate_energy_uj(
+    const std::vector<std::pair<uint64_t, int64_t>>& samples) {
+    if (samples.size() < 2) return 0;
+    double energy_nj = 0.0;
+    for (size_t i = 1; i < samples.size(); ++i) {
+        const double avg_p_uw =
+            (static_cast<double>(samples[i - 1].first) +
+             static_cast<double>(samples[i].first)) *
+            0.5;
+        const double dt_ms =
+            static_cast<double>(samples[i].second - samples[i - 1].second);
+        if (dt_ms > 0.0) energy_nj += avg_p_uw * dt_ms;
+    }
+    return static_cast<uint64_t>(energy_nj / 1000.0);
+}
+
 std::string ConvOutputFile = "Output/conv_output.csv";
 std::vector<std::string> ConvHeaders = {
     "index", "layer_name", "layer_number", "timestamp_power_reading",

@@ -223,6 +223,13 @@ class Session {
   int bitlength_value() const { return bitlength_; }
   int k_scale_value() const { return k_scale_; }
 
+  // Whole-session metrics written by EndComputation()
+  uint64_t wall_time_ms = 0;
+  uint64_t total_energy_uj = 0;
+  double avg_power_w = 0.0;
+  // "pid<PID>-port<PORT>"
+  std::string session_tag;
+
  private:
   // Primary (thread 0) channel and building blocks.
   NetIO* io_ = nullptr;
