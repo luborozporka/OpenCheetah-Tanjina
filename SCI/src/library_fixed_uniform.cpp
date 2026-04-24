@@ -31,6 +31,7 @@ SOFTWARE.
 #include "csv_writer.hpp" // Added by Tanjina for writing the measurement values into a csv file
 
 #include <fstream>
+#include <functional>
 #include <memory>
 #include <sstream>
 #include <unistd.h>
@@ -145,7 +146,7 @@ void MatMul2D(sci::Session &s, int32_t s1, int32_t s2, int32_t s3,
   std::thread matmulThreads[required_num_threads];
   for (int i = 0; i < required_num_threads; i++) {
     C_ans_arr[i] = new intType[s1 * s3];
-    matmulThreads[i] = std::thread(funcMatmulThread, i, required_num_threads,
+    matmulThreads[i] = std::thread(funcMatmulThread, std::ref(s), i, required_num_threads,
                                    s1, s2, s3, (intType *)A, (intType *)B,
                                    (intType *)C_ans_arr[i], partyWithAInAB_mul);
   }
@@ -378,11 +379,9 @@ void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
 
 #endif
 
-  static int ctr = 1;
-  std::cout << "Conv2DCSF " << ctr << " called N=" << N << ", H=" << H
+  std::cout << "Conv2DCSF " << s.conv_layer_count << " called N=" << N << ", H=" << H
             << ", W=" << W << ", CI=" << CI << ", FH=" << FH << ", FW=" << FW
             << ", CO=" << CO << ", S=" << strideH << std::endl;
-  ctr++;
 
   signedIntType newH = (((H + (zPadHLeft + zPadHRight) - FH) / strideH) + 1);
   signedIntType newW = (((W + (zPadWLeft + zPadWRight) - FW) / strideW) + 1);
@@ -597,7 +596,7 @@ void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
     conv_data.push_back(strideH);
     conv_data.push_back(strideW);
 
-    writeConvCSV.insertDataRow(conv_data);
+    writeConvDataRow(s.session_tag, conv_data);
   }
   
 #endif
@@ -639,11 +638,9 @@ void Conv2DGroupWrapper(sci::Session &s, signedIntType N, signedIntType H,
   INIT_TIMER;
 #endif
 
-  static int ctr = 1;
-  std::cout << "Conv2DGroupCSF " << ctr << " called N=" << N << ", H=" << H
+  std::cout << "Conv2DGroupCSF " << (s.conv_layer_count + 1) << " called N=" << N << ", H=" << H
             << ", W=" << W << ", CI=" << CI << ", FH=" << FH << ", FW=" << FW
             << ", CO=" << CO << ", S=" << strideH << ",G=" << G << std::endl;
-  ctr++;
 
 #ifdef SCI_OT
   // If its a ring, then its a OT based -- use the default Conv2DGroupCSF
@@ -702,9 +699,8 @@ void ElemWiseActModelVectorMult(sci::Session &s, int32_t size, intType *inArr,
     }
   }
 
-  static int batchNormCtr = 1;
-  std::cout << "Starting fused batchNorm #" << batchNormCtr << std::endl;
-  batchNormCtr++;
+  s.batch_norm_layer_count++;
+  std::cout << "Starting fused batchNorm #" << s.batch_norm_layer_count << std::endl;
 
 #ifdef SCI_OT
 #ifdef MULTITHREADED_DOTPROD
@@ -729,7 +725,7 @@ void ElemWiseActModelVectorMult(sci::Session &s, int32_t size, intType *inArr,
         curSize = chunk_size;
     }
     */
-    dotProdThreads[i] = std::thread(funcDotProdThread, i, num_threads, curSize,
+    dotProdThreads[i] = std::thread(funcDotProdThread, std::ref(s), i, num_threads, curSize,
                                     multArrVec + offset, inArr + offset,
                                     outputArr + offset, false);
   }
@@ -865,16 +861,13 @@ void ArgMax(sci::Session &s, int32_t s1, int32_t s2, intType *inArr,
 
 #endif
 
-  static int ctr = 1;
-
   // Add by Eloise // Tanjina - Need to check if I found this in the log because it is outside the #ifdef LOG_LAYERWISE block! >> Tanjina-Note: Move it to #ifdef LOG_LAYERWISE block???
   // std::cout << "*******************" << std::endl;
   // auto cur_start = CURRENT_TIME;
   // std::cout << "Current time of start for current ArgMax = " << cur_start
   //           << std::endl;
-  std::cout << "ArgMax #" << ctr << " called, s1=" << s1 << ", s2=" << s2
+  std::cout << "ArgMax #" << s.argmax_layer_count << " called, s1=" << s1 << ", s2=" << s2
             << std::endl;
-  ctr++;
 
   assert(s1 == 1 && "ArgMax impl right now assumes s1==1");
   argmax->ArgMaxMPC(s2, inArr, outArr);
@@ -996,9 +989,7 @@ void Relu(sci::Session &s, int32_t size, intType *inArr, intType *outArr,
 
 #endif
 
-  static int ctr = 1;
-  printf("Relu #%d on %d points, truncate=%d by %d bits\n", ctr++, size, doTruncation, sf);
-  ctr++;
+  printf("Relu #%d on %d points, truncate=%d by %d bits\n", s.relu_layer_count, size, doTruncation, sf);
 
   intType moduloMask = sci::all1Mask(bitlength);
   int eightDivElemts = ((size + 8 - 1) / 8) * 8;  //(ceil of s1*s2/8.0)*8
@@ -1020,7 +1011,7 @@ void Relu(sci::Session &s, int32_t size, intType *inArr, intType *outArr,
     } else {
       lnum_relu = chunk_size;
     }
-    relu_threads[i] = std::thread(funcReLUThread, i, tempOutp + offset, tempInp + offset, lnum_relu, nullptr, false);
+    relu_threads[i] = std::thread(funcReLUThread, std::ref(s), i, tempOutp + offset, tempInp + offset, lnum_relu, nullptr, false);
   }
   for (int i = 0; i < num_threads; ++i) {
     relu_threads[i].join();
@@ -1244,15 +1235,13 @@ void MaxPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
 
 #endif
 
-  static int ctr = 1;
-  std::cout << "Maxpool #" << ctr << " called N=" << N << ", H=" << H
+  std::cout << "Maxpool #" << s.maxpool_layer_count << " called N=" << N << ", H=" << H
             << ", W=" << W << ", C=" << C << ", ksizeH=" << ksizeH
             << ", ksizeW=" << ksizeW << ", zPadHLeft=" << zPadHLeft << ", zPadHRight=" << zPadHRight 
             << ", zPadWLeft=" << zPadWLeft << ", zPadWRight=" << zPadWRight 
             << ", strideH=" << strideH << ", strideW=" << strideW 
             << ", N1=" << N1 << ", imgH=" << imgH 
             << ", imgW=" << imgW << ", C1=" << C1 << std::endl;
-  ctr++;
 
   uint64_t moduloMask = sci::all1Mask(bitlength);
   int rowsOrig = N * H * W * C;
@@ -1321,7 +1310,7 @@ void MaxPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
       lnum_rows = chunk_size;
     }
     maxpool_threads[i] =
-        std::thread(funcMaxpoolThread, i, lnum_rows, cols,
+        std::thread(funcMaxpoolThread, std::ref(s), i, lnum_rows, cols,
                     reInpArr + offset * cols, maxi + offset, maxiIdx + offset);
   }
   for (int i = 0; i < num_threads; ++i) {
@@ -1523,15 +1512,13 @@ void AvgPool(sci::Session &s, int32_t N, int32_t H, int32_t W, int32_t C,
 
 #endif
 
-  static int ctr = 1;
-  std::cout << "AvgPool #" << ctr << " called N=" << N << ", H=" << H
+  std::cout << "AvgPool #" << s.avgpool_layer_count << " called N=" << N << ", H=" << H
             << ", W=" << W << ", C=" << C << ", ksizeH=" << ksizeH
             << ", ksizeW=" << ksizeW << ", zPadHLeft=" << zPadHLeft << ", zPadHRight=" << zPadHRight 
             << ", zPadWLeft=" << zPadWLeft << ", zPadWRight=" << zPadWRight 
             << ", strideH=" << strideH << ", strideW=" << strideW 
             << ", N1=" << N1 << ", imgH=" << imgH 
             << ", imgW=" << imgW << ", C1=" << C1 << std::endl;
-  ctr++;
 
   uint64_t moduloMask = sci::all1Mask(bitlength);
   int rows = N * H * W * C;
@@ -1737,8 +1724,8 @@ void ScaleDown(sci::Session &s, int32_t size, intType *inArr, int32_t sf) {
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
 #endif
-  static int ctr = 1;
-  printf("Truncate #%d on %d points by %d bits\n", ctr++, size, sf);
+  s.truncation_layer_count++;
+  printf("Truncate #%d on %d points by %d bits\n", s.truncation_layer_count, size, sf);
 
   int eightDivElemts = ((size + 8 - 1) / 8) * 8; //(ceil of s1*s2/8.0)*8
   intType *tempInp;
@@ -2364,9 +2351,8 @@ void ElemWiseSecretSharedVectorMult(sci::Session &s, int32_t size,
   INIT_ALL_IO_DATA_SENT;
   INIT_TIMER;
 #endif
-  static int batchNormCtr = 1;
-  std::cout << "Starting fused batchNorm #" << batchNormCtr << std::endl;
-  batchNormCtr++;
+  s.batch_norm_layer_count++;
+  std::cout << "Starting fused batchNorm #" << s.batch_norm_layer_count << std::endl;
 
 #ifdef SCI_OT
 #ifdef MULTITHREADED_DOTPROD
@@ -2380,7 +2366,7 @@ void ElemWiseSecretSharedVectorMult(sci::Session &s, int32_t size,
     } else {
       curSize = chunk_size;
     }
-    dotProdThreads[i] = std::thread(funcDotProdThread, i, num_threads, curSize,
+    dotProdThreads[i] = std::thread(funcDotProdThread, std::ref(s), i, num_threads, curSize,
                                     multArrVec + offset, inArr + offset,
                                     outputArr + offset, true);
   }

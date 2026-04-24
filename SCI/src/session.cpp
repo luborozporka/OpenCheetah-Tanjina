@@ -69,8 +69,6 @@ void Session::setup(int party, int port, const std::string& address,
   prg128_ = new PRG128();
 
 #ifdef SCI_OT
-  mult_ = new LinearOT(party, io_, otpack_);
-  truncation_ = new Truncation(party, io_, otpack_);
   mult_uniform_ = new MatMulUniform<NetIO, intType, IKNP<NetIO>>(
       party, bitlength, io_, iknp_ot_, iknp_ot_role_reversed_);
   relu_ = new ReLURingProtocol<NetIO, intType>(party, RING, io_, bitlength,
@@ -79,7 +77,6 @@ void Session::setup(int party, int port, const std::string& address,
       party, RING, io_, bitlength, MILL_PARAM, 0, otpack_, relu_);
   argmax_ = new ArgMaxProtocol<NetIO, intType>(party, RING, io_, bitlength,
                                                MILL_PARAM, 0, otpack_, relu_);
-  math_ = new MathFunctions(party, io_, otpack_);
 #endif
 
 #if USE_CHEETAH
@@ -109,8 +106,6 @@ void Session::setup(int party, int port, const std::string& address,
           3 - party, RING, io_arr_[i], bitlength, MILL_PARAM, 0,
           otpack_arr_[i], relu_arr_[i]);
       mult_arr_[i] = new LinearOT(3 - party, io_arr_[i], otpack_arr_[i]);
-      truncation_arr_[i] =
-          new Truncation(3 - party, io_arr_[i], otpack_arr_[i]);
     } else {
       relu_arr_[i] = new ReLURingProtocol<NetIO, intType>(
           party, RING, io_arr_[i], bitlength, MILL_PARAM, otpack_arr_[i]);
@@ -118,7 +113,6 @@ void Session::setup(int party, int port, const std::string& address,
           party, RING, io_arr_[i], bitlength, MILL_PARAM, 0, otpack_arr_[i],
           relu_arr_[i]);
       mult_arr_[i] = new LinearOT(party, io_arr_[i], otpack_arr_[i]);
-      truncation_arr_[i] = new Truncation(party, io_arr_[i], otpack_arr_[i]);
     }
   }
 #endif
@@ -210,14 +204,8 @@ void Session::teardown() {
   relu_ = nullptr;
 
 #ifdef SCI_OT
-  delete math_;
-  math_ = nullptr;
   delete mult_uniform_;
   mult_uniform_ = nullptr;
-  delete truncation_;
-  truncation_ = nullptr;
-  delete mult_;
-  mult_ = nullptr;
   for (int i = 0; i < num_threads_; i++) {
     delete math_arr_[i];
     math_arr_[i] = nullptr;
@@ -231,13 +219,21 @@ void Session::teardown() {
     mult_uniform_arr_[i] = nullptr;
     delete mult_arr_[i];
     mult_arr_[i] = nullptr;
+  }
+  aux_ = nullptr;
+  math_ = nullptr;
+  mult_ = nullptr;
+  truncation_ = nullptr;
+  xt_ = nullptr;
+#endif
+
+#if defined(SCI_OT) || defined(SCI_HE)
+  for (int i = 0; i < num_threads_; i++) {
     delete maxpool_arr_[i];
     maxpool_arr_[i] = nullptr;
     delete relu_arr_[i];
     relu_arr_[i] = nullptr;
   }
-  aux_ = nullptr;
-  xt_ = nullptr;
 #endif
 
   delete prg128_;

@@ -184,6 +184,7 @@ class Session {
   int relu_layer_count = 0;
   int maxpool_layer_count = 0;
   int batch_norm_layer_count = 0;
+  int truncation_layer_count = 0;
   int matmul_layer_count = 0;
   int avgpool_layer_count = 0;
   int argmax_layer_count = 0;

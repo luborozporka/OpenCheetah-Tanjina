@@ -25,6 +25,7 @@ SOFTWARE.
 #include "library_fixed_uniform.h"
 #include "session.h"
 #include <cmath>
+#include <functional>
 
 void funcLocalTruncate(int s, intType *arr, int consSF) {
   if (party == SERVER) {
@@ -83,9 +84,23 @@ inline intType funcSSCons(sci::Session &s, int64_t x) {
 
 inline intType getFieldMsb(intType x) { return (x > (prime_mod / 2)); }
 
+inline void funcReconstruct2PCCons(sci::Session &s, signedIntType *y,
+                                   const intType *x, int len);
+inline signedIntType funcReconstruct2PCCons(sci::Session &s, intType x,
+                                            int revealParty);
+
 void funcReconstruct2PCCons(signedIntType *y, const intType *x, int len) {
+  sci::Session *sp = sci::CurrentSession();
+  assert(sp != nullptr && "funcReconstruct2PCCons: no current session");
+  funcReconstruct2PCCons(*sp, y, x, len);
+}
+
+inline void funcReconstruct2PCCons(sci::Session &s, signedIntType *y,
+                                   const intType *x, int len) {
   intType temp = 0;
   signedIntType ans = 0;
+  const int party = s.party_value();
+  auto *io = s.io();
   if (party == SERVER) {
     io->send_data(x, len * sizeof(intType));
   } else if (party == CLIENT) {
@@ -109,17 +124,20 @@ void funcReconstruct2PCCons(signedIntType *y, const intType *x, int len) {
   return;
 }
 
-inline void funcReconstruct2PCCons(sci::Session &s, signedIntType *y,
-                                   const intType *x, int len) {
-  (void)s;
-  funcReconstruct2PCCons(y, x, len);
+signedIntType funcReconstruct2PCCons(intType x, int revealParty) {
+  sci::Session *sp = sci::CurrentSession();
+  assert(sp != nullptr && "funcReconstruct2PCCons: no current session");
+  return funcReconstruct2PCCons(*sp, x, revealParty);
 }
 
-signedIntType funcReconstruct2PCCons(intType x, int revealParty) {
+inline signedIntType funcReconstruct2PCCons(sci::Session &s, intType x,
+                                            int revealParty) {
   assert(revealParty == 2 && "Reveal to only client is supported right now.");
   intType temp = 0;
   signedIntType ans = 0;
   static const uint64_t moduloMask = sci::all1Mask(bitlength);
+  const int party = s.party_value();
+  auto *io = s.io();
   if (party == SERVER) {
     io->send_data(&x, sizeof(intType));
   } else if (party == CLIENT) {
@@ -136,12 +154,6 @@ signedIntType funcReconstruct2PCCons(intType x, int revealParty) {
   return ans;
 }
 
-inline signedIntType funcReconstruct2PCCons(sci::Session &s, intType x,
-                                            int revealParty) {
-  (void)s;
-  return funcReconstruct2PCCons(x, revealParty);
-}
-
 signedIntType div_floor(signedIntType a, signedIntType b) {
   signedIntType q = a / b;
   signedIntType r = a % b;
@@ -150,6 +162,10 @@ signedIntType div_floor(signedIntType a, signedIntType b) {
 }
 
 void funcTruncationIdeal(int size, intType *arr, int consSF) {
+  sci::Session *sp = sci::CurrentSession();
+  assert(sp != nullptr && "funcTruncationIdeal: no current session");
+  const int party = sp->party_value();
+  auto *io = sp->io();
   if (party == SERVER) {
     io->send_data(arr, sizeof(intType) * size);
     for (int i = 0; i < size; i++) {
@@ -174,10 +190,15 @@ void funcTruncationIdeal(int size, intType *arr, int consSF) {
       }
       arr[i] = ans;
     }
+    delete[] arrOther;
   }
 }
 
 void printAllReconstructedValuesSigned(int size, intType *arr) {
+  sci::Session *sp = sci::CurrentSession();
+  assert(sp != nullptr && "printAllReconstructedValuesSigned: no current session");
+  const int party = sp->party_value();
+  auto *io = sp->io();
   if (party == SERVER) {
     io->send_data(arr, sizeof(intType) * size);
   } else {
@@ -194,10 +215,15 @@ void printAllReconstructedValuesSigned(int size, intType *arr) {
       }
       std::cout << ans << std::endl;
     }
+    delete[] arrOther;
   }
 }
 
 intType funcSigendDivIdeal(intType x, uint32_t y) {
+  sci::Session *sp = sci::CurrentSession();
+  assert(sp != nullptr && "funcSigendDivIdeal: no current session");
+  const int party = sp->party_value();
+  auto *io = sp->io();
   if (party == SERVER) {
     io->send_data(&x, sizeof(intType));
     return 0;
@@ -209,23 +235,23 @@ intType funcSigendDivIdeal(intType x, uint32_t y) {
   }
 }
 
-void funcReLUThread(int tid, intType *outp, intType *inp, int numRelu,
+void funcReLUThread(sci::Session &s, int tid, intType *outp, intType *inp, int numRelu,
                     uint8_t *drelu_res = nullptr, bool skip_ot = false) {
-  reluArr[tid]->relu(outp, inp, numRelu, drelu_res, skip_ot);
+  s.reluArr()[tid]->relu(outp, inp, numRelu, drelu_res, skip_ot);
 }
 
-void funcMaxpoolThread(int tid, int rows, int cols, intType *inpArr, intType *maxi, intType *maxiIdx) {
-  maxpoolArr[tid]->funcMaxMPC(rows, cols, inpArr, maxi, maxiIdx);
+void funcMaxpoolThread(sci::Session &s, int tid, int rows, int cols, intType *inpArr, intType *maxi, intType *maxiIdx) {
+  s.maxpoolArr()[tid]->funcMaxMPC(rows, cols, inpArr, maxi, maxiIdx);
 }
 
 #ifdef SCI_OT
-void funcTruncateThread(int tid, int32_t size, intType *inpArr, intType *outpArr, int32_t scalingF, int32_t bw, bool isSigned, uint8_t *msb) {
-  truncationArr[tid]->truncate(size, inpArr, outpArr, scalingF, bw, isSigned, msb);
+void funcTruncateThread(sci::Session &s, int tid, int32_t size, intType *inpArr, intType *outpArr, int32_t scalingF, int32_t bw, bool isSigned, uint8_t *msb) {
+  s.truncationArr()[tid]->truncate(size, inpArr, outpArr, scalingF, bw, isSigned, msb);
 }
 
 #if USE_CHEETAH
-void funcReLUTruncateThread(int tid, int32_t size, intType *inpArr, intType *outpArr, int32_t scalingF, int32_t bw, bool isSigned) {
-  truncationArr[tid]->truncate_msb0(size, inpArr, outpArr, scalingF, bw, isSigned);
+void funcReLUTruncateThread(sci::Session &s, int tid, int32_t size, intType *inpArr, intType *outpArr, int32_t scalingF, int32_t bw, bool isSigned) {
+  s.truncationArr()[tid]->truncate_msb0(size, inpArr, outpArr, scalingF, bw, isSigned);
 }
 #endif
 
@@ -233,9 +259,11 @@ void funcReLUTruncateThread(int tid, int32_t size, intType *inpArr, intType *out
 
 
 #ifdef SCI_OT
-void funcMatmulThread(int tid, int N, int s1, int s2, int s3, intType *A,
+void funcMatmulThread(sci::Session &s, int tid, int N, int s1, int s2, int s3, intType *A,
                       intType *B, intType *C, int partyWithAInAB_mul) {
   assert(tid >= 0);
+  const int party = s.party_value();
+  const int bitlength = s.bitlength_value();
   int bucket_size = std::ceil(s2 / (double)N);
   int s2StartIdx = tid * bucket_size;                   // Inclusive
   int s2EndIdx = std::min((tid + 1) * bucket_size, s2); // Exclusive
@@ -280,20 +308,20 @@ void funcMatmulThread(int tid, int N, int s1, int s2, int s3, intType *A,
   if (useBobAsSender) {
     // Odd tid, use Bob (holding B) as sender and Alice (holding A) as receiver
     if (party == partyWithAInAB_mul) {
-      multUniformArr[tid]->funcOTReceiverInputA(s1, (s2EndIdx - s2StartIdx), s3,
-                                                APtr, C, otInstanceArr[tid]);
+      s.multUniformArr()[tid]->funcOTReceiverInputA(s1, (s2EndIdx - s2StartIdx), s3,
+                                                    APtr, C, s.otInstanceArr()[tid]);
     } else {
-      multUniformArr[tid]->funcOTSenderInputB(s1, (s2EndIdx - s2StartIdx), s3,
-                                              BPtr, C, otInstanceArr[tid]);
+      s.multUniformArr()[tid]->funcOTSenderInputB(s1, (s2EndIdx - s2StartIdx), s3,
+                                                  BPtr, C, s.otInstanceArr()[tid]);
     }
   } else {
     // Even tid, use Bob (holding B) as receiver and Alice (holding A) as sender
     if (party == partyWithAInAB_mul) {
-      multUniformArr[tid]->funcOTSenderInputA(s1, (s2EndIdx - s2StartIdx), s3,
-                                              APtr, C, otInstanceArr[tid]);
+      s.multUniformArr()[tid]->funcOTSenderInputA(s1, (s2EndIdx - s2StartIdx), s3,
+                                                  APtr, C, s.otInstanceArr()[tid]);
     } else {
-      multUniformArr[tid]->funcOTReceiverInputB(s1, (s2EndIdx - s2StartIdx), s3,
-                                                BPtr, C, otInstanceArr[tid]);
+      s.multUniformArr()[tid]->funcOTReceiverInputB(s1, (s2EndIdx - s2StartIdx), s3,
+                                                    BPtr, C, s.otInstanceArr()[tid]);
     }
   }
 #else  // USE_LINEAR_UNIFORM
@@ -310,9 +338,9 @@ void funcMatmulThread(int tid, int N, int s1, int s2, int s3, intType *A,
       mode = MultMode::Alice_has_B;
   }
   if (s2EndIdx > s2StartIdx) {
-    multArr[tid]->matmul_cross_terms(s1, (s2EndIdx - s2StartIdx), s3, APtr,
-                                     BPtr, C, bitlength, bitlength, bitlength,
-                                     true, mode);
+    s.multArr()[tid]->matmul_cross_terms(s1, (s2EndIdx - s2StartIdx), s3, APtr,
+                                         BPtr, C, bitlength, bitlength, bitlength,
+                                         true, mode);
   } else {
     memset(C, 0, s1 * s3 * sizeof(intType));
   }
@@ -320,20 +348,21 @@ void funcMatmulThread(int tid, int N, int s1, int s2, int s3, intType *A,
   delete[] APtr;
 }
 
-void funcDotProdThread(int tid, int N, int size, intType *multiplyArr,
+void funcDotProdThread(sci::Session &s, int tid, int N, int size, intType *multiplyArr,
                        intType *inArr, intType *outArr,
                        bool both_cross_terms = false) {
   if (size == 0)
     return;
   assert(tid >= 0);
+  const int bitlength = s.bitlength_value();
   if (tid & 1) {
     MultMode mode = (both_cross_terms ? MultMode::None : MultMode::Bob_has_A);
-    multArr[tid]->hadamard_cross_terms(size, multiplyArr, inArr, outArr,
-                                       bitlength, bitlength, bitlength, mode);
+    s.multArr()[tid]->hadamard_cross_terms(size, multiplyArr, inArr, outArr,
+                                           bitlength, bitlength, bitlength, mode);
   } else {
     MultMode mode = (both_cross_terms ? MultMode::None : MultMode::Alice_has_A);
-    multArr[tid]->hadamard_cross_terms(size, multiplyArr, inArr, outArr,
-                                       bitlength, bitlength, bitlength, mode);
+    s.multArr()[tid]->hadamard_cross_terms(size, multiplyArr, inArr, outArr,
+                                           bitlength, bitlength, bitlength, mode);
   }
 }
 #endif
@@ -491,6 +520,10 @@ void funcTruncateTwoPowerRing(int curParty, sci::NetIO *curio,
 #ifdef SCI_OT
 void funcTruncateTwoPowerRingWrapper(int size, intType *inp, intType *outp, int consSF, int bw, bool isSigned, uint8_t *msbShare) {
   assert(size % 8 == 0);
+  sci::Session *sp = sci::CurrentSession();
+  assert(sp != nullptr && "funcTruncateTwoPowerRingWrapper: no current session");
+  sci::Session &s = *sp;
+  const int num_threads = s.num_threads_value();
 #ifdef MULTITHREADED_TRUNC
   std::thread truncThreads[num_threads];
   int chunk_size = (size / (8 * num_threads)) * 8;
@@ -510,13 +543,13 @@ void funcTruncateTwoPowerRingWrapper(int size, intType *inp, intType *outp, int 
     if (msbShare != nullptr)
       msbShareArg = msbShareArg + offset;
 
-    truncThreads[i] = std::thread(funcTruncateThread, i, curSize, inp + offset, outp + offset, consSF, bw, isSigned, msbShareArg);
+    truncThreads[i] = std::thread(funcTruncateThread, std::ref(s), i, curSize, inp + offset, outp + offset, consSF, bw, isSigned, msbShareArg);
   }
   for (int i = 0; i < num_threads; ++i) {
     truncThreads[i].join();
   }
 #else
-  funcTruncateThread(0, size, inp, outp, consSF, bw, isSigned, msgShare);
+  funcTruncateThread(s, 0, size, inp, outp, consSF, bw, isSigned, msbShare);
 #endif
 }
 #endif
@@ -525,6 +558,10 @@ void funcTruncateTwoPowerRingWrapper(int size, intType *inp, intType *outp, int 
 #if USE_CHEETAH
 void funcReLUTruncateTwoPowerRingWrapper(int size, intType *inp, intType *outp, int consSF, int32_t bw, bool isSigned) {
   assert(size % 8 == 0);
+  sci::Session *sp = sci::CurrentSession();
+  assert(sp != nullptr && "funcReLUTruncateTwoPowerRingWrapper: no current session");
+  sci::Session &s = *sp;
+  const int num_threads = s.num_threads_value();
 #ifdef MULTITHREADED_TRUNC
   std::thread truncThreads[num_threads];
   int chunk_size = (size / (8 * num_threads)) * 8;
@@ -540,13 +577,13 @@ void funcReLUTruncateTwoPowerRingWrapper(int size, intType *inp, intType *outp, 
     if (i & 1)
       curParty = 3 - curParty;
 
-    truncThreads[i] = std::thread(funcReLUTruncateThread, i, curSize, inp + offset, outp + offset, consSF, bw, isSigned);
+    truncThreads[i] = std::thread(funcReLUTruncateThread, std::ref(s), i, curSize, inp + offset, outp + offset, consSF, bw, isSigned);
   }
   for (int i = 0; i < num_threads; ++i) {
     truncThreads[i].join();
   }
 #else
-  funcReLUTruncateThread(0, size, inp, outp, consSF, bw, isSigned);
+  funcReLUTruncateThread(s, 0, size, inp, outp, consSF, bw, isSigned);
 #endif
 }
 #endif // USE_CHEETAH
@@ -830,6 +867,11 @@ void funcAvgPoolTwoPowerRing(int curParty, sci::NetIO *curio,
 void funcAvgPoolTwoPowerRingWrapper(int size, intType *inp, intType *outp,
                                     intType divisor) {
   assert(size % 8 == 0);
+  sci::Session *sp = sci::CurrentSession();
+  assert(sp != nullptr && "funcAvgPoolTwoPowerRingWrapper: no current session");
+  sci::Session &s = *sp;
+  const int party = s.party_value();
+  const int num_threads = s.num_threads_value();
 #ifdef MULTITHREADED_TRUNC
   std::thread truncThreads[num_threads];
   int chunk_size = (size / (8 * num_threads)) * 8;
@@ -845,15 +887,15 @@ void funcAvgPoolTwoPowerRingWrapper(int size, intType *inp, intType *outp,
     if (i & 1)
       curParty = 3 - curParty;
     truncThreads[i] = std::thread(
-        funcAvgPoolTwoPowerRing, curParty, ioArr[i], otpackArr[i],
-        otInstanceArr[i], kkotInstanceArr[i], reluArr[i], prgInstanceArr[i],
+        funcAvgPoolTwoPowerRing, curParty, s.ioArr()[i], s.otpackArr()[i],
+        s.otInstanceArr()[i], s.kkotInstanceArr()[i], s.reluArr()[i], s.prgInstanceArr()[i],
         curSize, inp + offset, outp + offset, divisor);
   }
   for (int i = 0; i < num_threads; ++i) {
     truncThreads[i].join();
   }
 #else
-  funcAvgPoolTwoPowerRing(party, io, otpack, iknpOT, kkot, relu, prg128Instance,
+  funcAvgPoolTwoPowerRing(party, s.io(), s.otpack(), s.iknpOT(), s.kkot(), s.relu(), s.prg128(),
                           size, inp, outp, divisor);
 #endif
 }
@@ -1142,6 +1184,11 @@ template <typename intType>
 void funcFieldDivWrapper(int size, intType *inp, intType *outp, intType divisor,
                          uint8_t *msbShare) {
   assert(size % 8 == 0);
+  sci::Session *sp = sci::CurrentSession();
+  assert(sp != nullptr && "funcFieldDivWrapper: no current session");
+  sci::Session &s = *sp;
+  const int party = s.party_value();
+  const int num_threads = s.num_threads_value();
 #ifdef MULTITHREADED_TRUNC
   std::thread truncThreads[num_threads];
   int chunk_size = (size / (8 * num_threads)) * 8;
@@ -1160,15 +1207,15 @@ void funcFieldDivWrapper(int size, intType *inp, intType *outp, intType divisor,
     if (msbShare != nullptr)
       msbShareArg = msbShareArg + offset;
     truncThreads[i] = std::thread(
-        funcFieldDiv<intType>, curParty, ioArr[i], otpackArr[i],
-        otInstanceArr[i], kkotInstanceArr[i], reluArr[i], prgInstanceArr[i],
+        funcFieldDiv<intType>, curParty, s.ioArr()[i], s.otpackArr()[i],
+        s.otInstanceArr()[i], s.kkotInstanceArr()[i], s.reluArr()[i], s.prgInstanceArr()[i],
         curSize, inp + offset, outp + offset, divisor, msbShareArg);
   }
   for (int i = 0; i < num_threads; ++i) {
     truncThreads[i].join();
   }
 #else
-  funcFieldDiv<intType>(party, io, otpack, iknpOT, kkot, relu, prg128Instance,
+  funcFieldDiv<intType>(party, s.io(), s.otpack(), s.iknpOT(), s.kkot(), s.relu(), s.prg128(),
                         size, inp, outp, divisor, msbShare);
 #endif
 }

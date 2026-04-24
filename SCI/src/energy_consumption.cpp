@@ -18,6 +18,7 @@
 #include <cstring>
 #include <iostream>
 #include <fstream>
+#include <mutex>
 
 #include "energy_consumption.hpp"
 
@@ -30,9 +31,9 @@
  * - `input`: The handle to the file to read the measurements from.
  * - `results`: Pointer to the array to write the results to.
  */
-void measurement_thread(bool* running, std::string input, std::vector<std::pair<uint64_t, int64_t>>* results) {
+void measurement_thread(std::atomic<bool>* running, std::string input, std::vector<std::pair<uint64_t, int64_t>>* results) {
     // Loop
-    for (uint64_t i = 0; *running; i++) {
+    for (uint64_t i = 0; running->load(std::memory_order_relaxed); i++) {
         // Open the file
         std::ifstream input_h(input);
         if (input_h.fail()) {
@@ -80,7 +81,7 @@ EnergyMeasurement::~EnergyMeasurement() {
     // Deallocate all things left to deallocate
     if (this->thread != nullptr) {
         // First, stop the thread before killing the object
-        *(this->measuring) = false;
+        this->measuring->store(false, std::memory_order_relaxed);
         this->thread->join();
         delete this->thread;
     }
@@ -97,10 +98,10 @@ EnergyMeasurement::~EnergyMeasurement() {
 EnergyMeasurement::EnergyMeasurement(const std::string& measurement_file):
     thread(nullptr),
     results(new std::vector<std::pair<uint64_t, int64_t>>()),
-    measuring(new bool(false))
+    measuring(new std::atomic<bool>(false))
 {
     // Launch the thread
-    *this->measuring = true;
+    this->measuring->store(true, std::memory_order_relaxed);
     this->thread = new std::thread(measurement_thread, this->measuring, measurement_file, this->results);
 }
 
@@ -108,7 +109,7 @@ std::vector<std::pair<uint64_t, int64_t>> EnergyMeasurement::stop() {
     if (this->thread == nullptr || this->results == nullptr) { return std::vector<std::pair<uint64_t, int64_t>>(); }
 
     // First, stop the thread
-    *(this->measuring) = false;
+    this->measuring->store(false, std::memory_order_relaxed);
     this->thread->join();
 
     // Destroy the thread
@@ -173,11 +174,37 @@ double measure_idle_power_w(const std::string& hwmon_path, int duration_ms, size
     return static_cast<double>(mean_uw / 1.0e6L);
 }
 
-std::string ConvOutputFile = "Output/conv_output.csv";
 std::vector<std::string> ConvHeaders = {
     "index", "layer_name", "layer_number", "timestamp_power_reading",
     "avg_power_usage_mcW", "conv_start_timestamp", "conv_end_timestamp",
     "execution_time_ms", "conv_N", "conv_H", "conv_W", "conv_CI",
     "conv_FH", "conv_FW", "conv_CO", "conv_ zPadHLeft", "conv_zPadHRight",
     "conv_zPadWLeft", "conv_zPadWRight", "conv_strideH", "conv_strideW"};
-WriteToCSV writeConvCSV(ConvOutputFile, ConvHeaders);
+
+void writeConvDataRow(const std::string& session_tag,
+                      const std::vector<csv_column_type>& dataRow_values) {
+    static std::mutex conv_csv_mu;
+    std::lock_guard<std::mutex> lock(conv_csv_mu);
+
+    const std::string path = "Output/conv-" + session_tag + ".csv";
+    const bool write_header = !std::ifstream(path.c_str()).good();
+    std::ofstream csvFile(path, std::ios::out | std::ios::app);
+    if (!csvFile.is_open()) {
+        std::cerr << "ERROR: Failed to open the CSV file: " << path << std::endl;
+        return;
+    }
+
+    if (write_header) {
+        for (size_t i = 0; i < ConvHeaders.size(); i++) {
+            csvFile << ConvHeaders[i];
+            if (i < ConvHeaders.size() - 1) csvFile << ",";
+        }
+        csvFile << "\n";
+    }
+
+    for (size_t i = 0; i < dataRow_values.size(); i++) {
+        std::visit([&](auto&& arg) { csvFile << arg; }, dataRow_values[i]);
+        if (i < dataRow_values.size() - 1) csvFile << ",";
+    }
+    csvFile << "\n";
+}

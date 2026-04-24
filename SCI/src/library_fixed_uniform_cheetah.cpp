@@ -97,11 +97,9 @@ void MatMul2D(sci::Session &s, int32_t d0, int32_t d1, int32_t d2,
 
 #endif
 
-  static int ctr = 1;
   printf(
       "Matmul #%d called d0=%ld, d1=%ld, d2=%ld, is_A_weight_matrix=%s\n",
-      ctr++, d0, d1, d2, is_A_weight_matrix ? "true" : "false");
-  ctr++;
+      s.matmul_layer_count, d0, d1, d2, is_A_weight_matrix ? "true" : "false");
 
   using namespace gemini;
   CheetahLinear::FCMeta meta;
@@ -317,7 +315,6 @@ void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
   if (zPadHLeft < zPadHRight) {
     std::swap(zPadHLeft, zPadHRight);
   }
-  static int ctr = 1;
   signedIntType newH = (((H + (zPadHLeft + zPadHRight) - FH) / strideH) + 1);
   signedIntType newW = (((W + (zPadWLeft + zPadWRight) - FW) / strideW) + 1);
 
@@ -360,7 +357,7 @@ void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
       "HomConv #%d called N=%ld, H=%ld, W=%ld, CI=%ld, FH=%ld, FW=%ld, "
       "CO=%ld, zPadHLeft=%ld, zPadHRight=%ld, zPadWLeft=%ld, zPadWRight=%ld, "
       "strideH=%ld, strideW=%ld\n",
-      ctr++, N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight,
+      s.conv_layer_count, N, H, W, CI, FH, FW, CO, zPadHLeft, zPadHRight, zPadWLeft, zPadWRight,
       strideH, strideW);
 
 #ifdef LOG_LAYERWISE
@@ -565,7 +562,7 @@ void Conv2DWrapper(sci::Session &s, signedIntType N, signedIntType H,
     conv_data.push_back(strideH);
     conv_data.push_back(strideW);
 
-    writeConvCSV.insertDataRow(conv_data);
+    writeConvDataRow(s.session_tag, conv_data);
   }
 #endif
 
@@ -614,16 +611,13 @@ void BatchNorm(sci::Session &s, int32_t B, int32_t H, int32_t W, int32_t C,
            
 #endif
 
-  static int batchNormCtr = 1;
-
   gemini::CheetahLinear::BNMeta meta;
   meta.target_base_mod = prime_mod;
   meta.is_shared_input = kIsSharedInput;
   meta.ishape = gemini::TensorShape({C, H, W});
 
-  std::cout << "HomBN1 #" << batchNormCtr << " on shape " << meta.ishape
+  std::cout << "HomBN1 #" << s.batch_norm_layer_count << " on shape " << meta.ishape
             << std::endl;
-  batchNormCtr++;
 
   gemini::Tensor<intType> scale_vec;
   scale_vec.Reshape(gemini::TensorShape({C}));
@@ -747,13 +741,12 @@ void ElemWiseActModelVectorMult(sci::Session &s, int32_t size, intType *inArr,
          
 #endif
 
-  static int batchNormCtr = 1;
   // Add by Eloise // Tanjina - Need to check if I found this in the log because it is outside the #ifdef LOG_LAYERWISE block! >> Tanjina-Note: Move it to #ifdef LOG_LAYERWISE block???
   // std::cout << "*******************" << std::endl;
   // auto cur_start = CURRENT_TIME;
   // std::cout << "Current time of start for current BN2 = " << cur_start
   //           << std::endl;
-  printf("HomBN2 #%d via element-wise mult on %d points\n", batchNormCtr++,
+  printf("HomBN2 #%d via element-wise mult on %d points\n", s.batch_norm_layer_count,
          size);
 
   gemini::CheetahLinear::BNMeta meta;

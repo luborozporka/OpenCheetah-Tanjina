@@ -16,6 +16,7 @@
 #ifndef _ENERGY_CONSUMPTION_HPP
 #define _ENERGY_CONSUMPTION_HPP
 
+#include <atomic>
 #include <cstdint>
 #include <string>
 #include <thread>
@@ -32,7 +33,7 @@ private:
     /* The results collected during measuring. */
     std::vector<std::pair<uint64_t, int64_t>>* results;
     /* The flag telling the thread to continue. */
-    bool* measuring;
+    std::atomic<bool>* measuring;
 
 public:
     /* Constructor for the EnergyMeasurement.
@@ -107,8 +108,8 @@ double measure_idle_power_w(const std::string& hwmon_path, int duration_ms,
                             int64_t* effective_duration_ms_out = nullptr);
 
 // Tanjina: per-layer CSV for Conv layers (layer index, timestamps, avg power, geometry)
-extern std::string ConvOutputFile;
 extern std::vector<std::string> ConvHeaders;
-extern WriteToCSV writeConvCSV;
+void writeConvDataRow(const std::string& session_tag,
+                      const std::vector<csv_column_type>& dataRow_values);
 
 #endif

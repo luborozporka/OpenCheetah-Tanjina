@@ -8,13 +8,14 @@ End of the first thesis phase: the Cheetah framework can now serve multiple conc
 
 ### Architecture
 - Global crypto/profiling state removed, `sci::Session` is used instead
-- Thread-per-session concurrency (Boost.Asio accept loop, detached worker thread)
+- Thread-per-session concurrency (blocking Boost.Asio accept/control handshake, detached worker thread)
 - `sci::PortRangeAllocator` hands each session its own port range for Cheetah's internal multi-threaded networking
 - `sci::CurrentSession()` + `thread_local`
 
 ### Instrumentation
 - Tanjina's per-layer counters (`LOG_LAYERWISE`) preserved, migrated from globals into `sci::Session` members
 - Per-session CSV in `Output/session-<pid>-<port>.csv` records `wall_time_ms, total_comm_bytes, total_energy_uj, avg_power_w, idle_power_w`
+- Per-session Conv power CSVs are written as `Output/conv-<pid>-<port>.csv` to avoid interleaving layer measurements from concurrent clients
 - Baseline power usage is sampled once at startup via `hwmon` and is written to `Output/idle.csv`
 
 ### Networks supported
@@ -29,3 +30,4 @@ End of the first thesis phase: the Cheetah framework can now serve multiple conc
 # Client
 ./build/bin/cheetah-client net=sqnet ip=<server-ip> \
   control_port=32000 image=<path-to-image> idle_ms=2000
+```
